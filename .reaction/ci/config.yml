@@ -16,6 +16,7 @@ testing:
     - branches
   except:
     - master
+    - gaianysus
 
 master:
   stage: deploy
@@ -24,3 +25,4 @@ master:
     - docker push "$CI_REGISTRY_IMAGE:latest"
   only:
     - master
+    - gaianysus
