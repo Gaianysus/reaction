@@ -18,7 +18,7 @@ install:
 
 script:
   - npm test
-  - reaction test
+  - TOOL_NODE_FLAGS="--max-old-space-size=2048" reaction test
 
 after_success:
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
