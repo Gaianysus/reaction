@@ -5,13 +5,13 @@ import { Shops, Accounts } from "/lib/collections";
 import { currencyDep } from "./main";
 
 /**
- * findCurrency
- * private function for returning user currency
- * @param   {Object}  defaultCurrency    The default currency
+ * @name findCurrency
+ * @summary Private function for returning user currency
+ * @private
+ * @param {Object}  defaultCurrency    The default currency
  * @param {Boolean} useDefaultShopCurrency - flag for displaying shop's currency in Admin view of PDP
- * @return  {Object}  user currency or shop currency if none is found
+ * @return {Object}  user currency or shop currency if none is found
  */
-
 function findCurrency(defaultCurrency, useDefaultShopCurrency) {
   const shop = Shops.findOne(Reaction.getPrimaryShopId(), {
     fields: {
@@ -24,7 +24,7 @@ function findCurrency(defaultCurrency, useDefaultShopCurrency) {
   const user = Accounts.findOne({
     _id: Meteor.userId()
   });
-  const profileCurrency = user.profile && user.profile.currency;
+  const profileCurrency = user && user.profile && user.profile.currency;
   if (typeof shop === "object" && shop.currencies && profileCurrency) {
     let userCurrency = {};
     if (shop.currencies[profileCurrency]) {
@@ -42,9 +42,10 @@ function findCurrency(defaultCurrency, useDefaultShopCurrency) {
 }
 
 /**
- * formatPriceString
- * @summary return shop /locale specific formatted price
- * also accepts a range formatted with " - "
+ * @name formatPriceString
+ * @summary Return shop/locale specific formatted price. Also accepts a range formatted with " - ".
+ * @memberof i18n
+ * @method
  * @param {String} formatPrice - currentPrice or "xx.xx - xx.xx" formatted String
  * @param {Boolean} useDefaultShopCurrency - flag for displaying shop's currency in Admin view of PDP
  * @return {String} returns locale formatted and exchange rate converted values
@@ -86,7 +87,7 @@ export function formatPriceString(formatPrice, useDefaultShopCurrency) {
       // we know the locale, but we don"t know exchange rate. In that case we
       // should return to default shop currency
       if (typeof userCurrency.rate !== "number") {
-        throw new Meteor.Error("exchangeRateUndefined");
+        throw new Meteor.Error("invalid-exchange-rate", "Exchange rate is invalid");
       }
       prices[i] *= userCurrency.rate;
 
@@ -101,6 +102,13 @@ export function formatPriceString(formatPrice, useDefaultShopCurrency) {
   return price;
 }
 
+/**
+ * @name formatNumber
+ * @memberof i18n
+ * @method
+ * @param {String} currentPrice - current Price
+ * @return {String} return formatted number
+ */
 export function formatNumber(currentPrice) {
   const locale = Reaction.Locale.get();
   let price = currentPrice;

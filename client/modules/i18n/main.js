@@ -5,13 +5,17 @@ import { Tracker } from "meteor/tracker";
 import { SimpleSchema } from "meteor/aldeed:simple-schema";
 import { Reaction } from "/client/api";
 
-//
-// Reaction i18n Translations, RTL and Currency Exchange Support
-//
+/**
+ * @file **Internationalization**
+ * Methods and template helpers for i18n, translations, right-to-left (RTL) and currency exchange support
+ * @namespace i18n
+ */
 
 /**
- * getBrowserLanguage
- * @summary detects device default language
+ * @name getBrowserLanguage
+ * @method
+ * @memberof i18n
+ * @summary Detects device default language
  * @return {String} language code
  */
 export function getBrowserLanguage() {
@@ -27,8 +31,10 @@ export function getBrowserLanguage() {
 }
 
 /**
- * getLabelsFor
- * get Labels for simple.schema keys
+ * @name getLabelsFor
+ * @method
+ * @memberof i18n
+ * @summary Get Labels for simple.schema keys
  * @param  {Object} schema - schema
  * @param  {String} name - name
  * @return {Object} return schema label object
@@ -52,13 +58,14 @@ export function getLabelsFor(schema, name) {
 }
 
 /**
- * getMessagesFor
- * get i18n messages for autoform messages
- * currently using a globalMessage namespace only*
- * (1) Use schema-specific message for specific key
- * (2) Use schema-specific message for generic key
- * (3) Use schema-specific message for type
- * @todo implement messaging hierarchy from simple-schema
+ * @name getMessagesFor
+ * @method
+ * @memberof i18n
+ * @summary Get i18n messages for autoform messages. Currently using a globalMessage namespace only.
+ * 1. Use schema-specific message for specific key
+ * 2. Use schema-specific message for generic key
+ * 3. Use schema-specific message for type
+ * @todo Implement messaging hierarchy from simple-schema
  * @return {Object} returns i18n translated message for schema labels
  */
 export function getMessagesFor() {
@@ -75,11 +82,8 @@ export function getMessagesFor() {
   return messages;
 }
 
-/**
- *  set language and autorun on change of language
- *  initialize i18n and load data resources for the current language and fallback "EN"
- *
- */
+// set language and autorun on change of language
+// initialize i18n and load data resources for the current language and fallback "EN"
 export const i18nextDep = new Tracker.Dependency();
 export const localeDep = new Tracker.Dependency();
 export const currencyDep = new Tracker.Dependency();
