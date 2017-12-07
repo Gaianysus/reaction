@@ -27,31 +27,15 @@
         },
         "groups": {
           "appearance": "Görünüm",
-          "addUserError": "Gruba kullanıcı eklenirken hata oluştu",
-          "addUserSuccess": "Gruba kullanıcı eklendi",
-          "removeUserError": "Grubu kullanıcıya kaldırma hatası",
-          "removeUserSuccess": "Kullanıcı başarıyla kaldırıldı",
-          "connect": "Bağlamak",
-          "core": "çekirdek",
-          "name": "Isim",
           "email": "E-posta",
-          "create": "Grup oluştur",
-          "update": "Grubu Güncelle",
-          "lastActive": "Son aktif",
+          "connect": "Bağlamak",
           "description": "Ürün açıklması ekle",
+          "core": "çekirdek",
           "remove": "Sil",
-          "newGroup": "Yeni Grup",
-          "selectGroup": "Grubu Seç",
-          "editGroups": "Grupları Düzenle",
           "dashboard": "Gösterge paneli",
-          "errorCreate": "Grup oluşturulurken hata oluştu",
-          "successCreate": "Grup başarıyla oluşturuldu",
-          "errorUpdate": "Grubu güncelleme hatası",
-          "successUpdate": "Grup başarıyla güncellendi",
           "misc": "Çeşitli",
           "paymentMethod": "Ödeme Sağlayıcıları",
-          "utilities": "Kamu hizmetleri",
-          "marketplace": "Pazaryeri"
+          "utilities": "Kamu hizmetleri"
         },
         "settings": {
           "accountSettingsLabel": "Hesap Ayarları",
@@ -75,8 +59,6 @@
       "app": {
         "add": "Eklemek",
         "editMode": "Düzenleme modu",
-        "administratorView": "yönetici görüntüle",
-        "customerView": "Müşteri Bilgileri",
         "createContent": "İçerik oluşturma",
         "auto": "Oto",
         "save": "Kaydet",
@@ -146,9 +128,7 @@
         "shopLocalizationSettingsSaved": "Mağaza yerelleştirme ayarları kaydedildi.",
         "shopLocalizationSettingsFailed": "Mağaza yerelleştirme ayarları güncellemesi başarısız oldu.",
         "shopPaymentMethodsSaved": "Mağaza Ödeme Yöntemleri ayarları kaydedildi.",
-        "shopPaymentMethodsFailed": "Mağaza Ödeme Yöntemleri ayarları güncellemesi başarısız oldu.",
-        "shopBrandAssetsSaved": "Güncellenmiş marka varlığı",
-        "shopBrandAssetsFailed": "Marka varlığı güncellenemedi"
+        "shopPaymentMethodsFailed": "Mağaza Ödeme Yöntemleri ayarları güncellemesi başarısız oldu."
       },
       "notifications": {
         "body": {
@@ -158,7 +138,7 @@
           "viewAll": "Hepsini Gör"
         },
         "messages": {
-          "orderCancelled": "Siparişiniz iptal edildi.",
+          "orderCanceled": "Siparişiniz iptal edildi.",
           "newOrder": "Siparişiniz işleniyor.",
           "forAdmin": "Yeni bir düzen var.",
           "orderDelivered": "Siparişiniz teslim edildi.",
@@ -175,7 +155,6 @@
         "whenYouAreDone": "düzenlemenizi bitirdikten sonra.",
         "tags": "Etiketler",
         "tagsAdd": "Etiket ekle",
-        "tagsEdit": "Düzenleme etiketleri",
         "tagExists": "Etiket zaten var, ya da boş.",
         "tagInUse": "Etiket kullanımda ve silinemez.",
         "dropFiles": "yüklemek için açılan dosyaları",
@@ -202,8 +181,8 @@
         "soldOut": "Tükendi!",
         "backOrder": "Geçici olarak stok dışı",
         "limitedSupply": "Sınırlı stok",
-        "publishProductVisible": " artık görünür",
-        "publishProductHidden": " artık gizli",
+        "publishProductVisible": "{{product}} artık görünür",
+        "publishProductHidden": "{{product}} artık gizli",
         "clonedAlert": "klonlanmış {{product}}",
         "clonedAlert_plural": "klonlanmış {{product}}",
         "archivedAlert": "Arşivlenen {{product}}",
@@ -309,8 +288,8 @@
         "details": "Ayrıntılar",
         "disable": "devre dışı bırakmak",
         "disableConfirm": "Eğer {{app}} devre dışı bırakmak istediğiniz emin misiniz?",
-        "pkgEnabled": " şu anda etkin.",
-        "pkgDisabled": " şu anda etkin değil."
+        "pkgEnabled": "{{app}} şu anda etkin.",
+        "pkgDisabled": "{{app}} şu anda etkin değil."
       },
       "gridSettingsPanel": {
         "title": "Izgara Ayarları",
@@ -324,7 +303,11 @@
         "coreOrderWorkflow/created": "oluşturuldu",
         "coreOrderWorkflow/processing": "Işleme",
         "coreOrderWorkflow/completed": "Tamamlanan",
-        "coreOrderWorkflow/canceled": "Iptal edildi"
+        "coreOrderWorkflow/canceled": "Iptal edildi",
+        "coreOrderWorkflow/picked": "Seçilmiş",
+        "coreOrderWorkflow/packed": "paketlenmiş",
+        "coreOrderWorkflow/labeled": "Etiketli",
+        "coreOrderWorkflow/shipped": "gönderilen"
       },
       "cartSubTotals": {
         "discount": "İndirim",
@@ -375,14 +358,35 @@
         "payment": "Ödeme",
         "itemsFrom": "kalem (ler) den",
         "filter": {
+          "processing": "Işleme",
+          "status": "Durum",
+          "dateRange": "Tarih aralığı",
+          "shippingStatus": "Nakliye durumu",
           "new": "Yeni",
           "captured": "Ödeme Yakalanan",
-          "processing": "Işleme",
           "shipped": "gönderilen",
           "completed": "Tamamlanan",
           "canceled": "Iptal edildi",
           "refunded": "iade"
         },
+        "capture": "Ele geçirmek",
+        "capturing": "yakalama",
+        "bulkActions": "Toplu eylemler",
+        "selected": "Seçilmiş",
+        "picked": "Seçilmiş",
+        "packed": "paketlenmiş",
+        "labeled": "Etiketli",
+        "shipped": "gönderilen",
+        "printInvoiceAndPickSheet": "Fatura ve Levha Yazdır",
+        "generateLabel": "Etiket Yarat",
+        "approveBulkOrderAction": "Evet, Hepsini Ayarla Tüm Siparişleri Seç",
+        "approveBulkOrderActionRegression": "Evet, Seçilen Tüm Siparişleri Geciktir",
+        "cancelBulkOrderAction": "Hayır, İptal et",
+        "orderAlreadyInState": "{{orderText}} zaten {{status}} oldu",
+        "orderSetToState": "{{orderNumber}} {{orderText}}, {{status}} olarak ayarlandı",
+        "skippedBulkOrdersAlert": "{{selectedOrders}} {{orderText}} öğesinin '{{status}}' konumuna ayarlanmasını ancak bu siparişlerin {{numberOfSkippedOrders}}'ünün {{skippedOrdersText}} konumunun '{{skippedState}}' durumunda olmadığını ve '{{status}}' durumuna giden tüm adımları atlamasını istediniz. Bunu yapmak istediğinden emin misin?",
+        "bulkOrdersRegressionAlert": "{{ordersToRegress}} {{orderText}} sayfasını '{{status}}' durumuna gerilemek üzeresiniz. Bu işleme devam etmek istediğinizden emin misiniz?",
+        "paymentCaptureSuccess": "Ödemeler başarıyla alındı",
         "showMore": "Daha Fazla Göster"
       },
       "orderShipping": {
@@ -434,7 +438,8 @@
         "createOrLogin": "Hesap oluştur ya da giriş yap",
         "guestOrLogin": "Giriş yap ya da misafir olarak öde",
         "continueAsGuest": "Misafir olarak devam et",
-        "guestMessage": "Bir hesap oluşturmadan ödeme yapabilirsiniz. Daha sonra hesap oluşturabilirsiniz."
+        "guestMessage": "Bir hesap oluşturmadan ödeme yapabilirsiniz. Daha sonra hesap oluşturabilirsiniz.",
+        "addEmail": "E-posta ekleyin"
       },
       "addressBookGrid": {
         "addAddress": "Adres Ekle",
@@ -576,9 +581,6 @@
       },
       "search": {
         "clearSearch": "Açık",
-        "noProductsFound": "Hiçbir ürün bulundu.",
-        "noOrdersFound": "Hiçbir emir bulunamadı.",
-        "noAccountsFound": "Hiçbir hesap bulunamadı.",
         "searchInputLabel": "Arama Tepki",
         "suggestedTags": "önerilen etiketler",
         "searchTypeProducts": "Ürünler",
@@ -591,29 +593,12 @@
           "lastName": "Soyadı",
           "phone": "Telefon",
           "emails": "E-posta"
-        },
-        "orderSearchResults": {
-          "orderId": "Sipariş Kimliği",
-          "shopId": "Mağaza kimliği",
-          "shippingAddress": "Adres",
-          "shippingCity": "Şehir",
-          "shippingRegion": "bölge",
-          "shippingCountry": "Ülke",
-          "shippingPhone": "Telefon",
-          "shippingName": "Isim",
-          "shippingStatus": "Durum",
-          "billingAddress": "Adres",
-          "billingCity": "Şehir",
-          "billingRegion": "bölge",
-          "billingCountry": "Ülke",
-          "billingPhone": "Telefon",
-          "billingStatus": "Durum",
-          "userEmails": "E-posta",
-          "orderDate": "Tarih",
-          "orderTotal": "Toplam"
         }
       },
       "accountsUI": {
+        "usersOrders": "Kullanıcı emirleri",
+        "oops": "Hata!",
+        "nonExistentAccount": "Aradığınız kullanıcı yok.",
         "members": "ÜyelerMembers",
         "manage": "Yönet",
         "guest": "Misafir",
@@ -678,7 +663,6 @@
         },
         "error": {
           "emailRequired": "E-posta gerekli.",
-          "groupRequired": "Varsayılan sahip grubu dışındaki bir grup gereklidir.",
           "passwordRequired": "Şifre gerekli.",
           "passwordMustBeAtLeast6CharactersLong": "Şifre en az 6 karakterden oluşmalıdır.",
           "passwordMustContainRequirements": "Şifre en az bir sayı yada sembol içermelidir",

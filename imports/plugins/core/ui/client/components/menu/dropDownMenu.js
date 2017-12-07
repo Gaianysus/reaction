@@ -98,9 +98,11 @@ class DropDownMenu extends Component {
       >
         <Components.Menu
           className={this.props.className}
+          menuClassName={this.props.menuClassName}
           value={this.props.value}
           onChange={this.handleMenuItemChange}
           style={this.props.menuStyle}
+          isClickable={this.props.isClickable}
         >
           {this.props.children}
         </Components.Menu>
@@ -115,8 +117,10 @@ DropDownMenu.propTypes = {
   children: PropTypes.node,
   className: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   closeOnClick: PropTypes.bool,
+  isClickable: PropTypes.bool,
   isEnabled: PropTypes.bool,
   isOpen: PropTypes.bool,
+  menuClassName: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   menuStyle: PropTypes.object,
   onChange: PropTypes.func,
   onPublishClick: PropTypes.func,

@@ -2,9 +2,10 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames/dedupe";
 import moment from "moment";
-import { formatPriceString } from "/client/api";
+import { formatPriceString, i18next } from "/client/api";
 import Avatar from "react-avatar";
-import { Badge, ClickToCopy, Icon, RolloverCheckbox } from "@reactioncommerce/reaction-ui";
+import { Badge, ClickToCopy, Icon, RolloverCheckbox, Checkbox } from "@reactioncommerce/reaction-ui";
+import { getOrderRiskBadge, getOrderRiskStatus, getBillingInfo } from "../helpers";
 
 class OrderTableColumn extends Component {
   static propTypes = {
@@ -12,48 +13,75 @@ class OrderTableColumn extends Component {
     handleClick: PropTypes.func,
     handleSelect: PropTypes.func,
     row: PropTypes.object,
-    selectedItems: PropTypes.array,
-    shippingBadgeStatus: PropTypes.func
+    selectedItems: PropTypes.array
+  }
+
+  renderCheckboxOnSelect(row) {
+    if (this.props.selectedItems.length) {
+      return (
+        <div className="all-checkboxes">
+          <Checkbox
+            className="checkbox-large checkbox-avatar"
+            name={row.original._id}
+            onChange={this.props.handleSelect}
+            checked={this.props.selectedItems.includes(row.original._id)}
+          />
+        </div>
+      );
+    }
+    return (
+      <RolloverCheckbox
+        checkboxClassName="checkbox-avatar checkbox-large"
+        name={row.original._id}
+        onChange={this.props.handleSelect}
+        checked={this.props.selectedItems.includes(row.original._id)}
+      >
+        <Avatar
+          email={row.original.email}
+          round={true}
+          name={row.value}
+          size={30}
+          className="rui-order-avatar"
+        />
+      </RolloverCheckbox>
+    );
   }
 
   render() {
-    const { row, selectedItems, handleClick, handleSelect, fulfillmentBadgeStatus, shippingBadgeStatus } = this.props;
-    const columnAccessor = row.column.id;
+    const columnAccessor = this.props.row.column.id;
+    const invoice = getBillingInfo(this.props.row.original).invoice || {};
+    const orderRisk = getOrderRiskStatus(this.props.row.original);
 
-    if (columnAccessor === "shipping[0].address.fullName") {
+    if (columnAccessor === "shippingFullName") {
       return (
         <div style={{ display: "inline-flex" }}>
-          <RolloverCheckbox
-            checkboxClassName="checkbox-avatar checkbox-large"
-            name={row.original._id}
-            onChange={handleSelect}
-            checked={selectedItems.includes(row.original._id)}
-          >
-            <Avatar
-              email={row.original.email}
-              round={true}
-              name={row.value}
-              size={30}
-              className="rui-order-avatar"
-            />
-          </RolloverCheckbox>
-          <strong style={{ paddingLeft: 5, marginTop: 7 }}>{row.value}</strong>
+          {this.renderCheckboxOnSelect(this.props.row)}
+          <strong className="orders-full-name">
+            {this.props.row.value}
+            {orderRisk &&
+              <Badge
+                className="risk-info"
+                i18nKeyLabel={`admin.orderRisk.${orderRisk}`}
+                status={getOrderRiskBadge(orderRisk)}
+              />
+            }
+          </strong>
         </div>
       );
     }
     if (columnAccessor === "email") {
       return (
-        <div style={{ marginTop: 7 }}>{row.value}</div>
+        <div style={{ marginTop: 7 }}>{this.props.row.value}</div>
       );
     }
     if (columnAccessor === "createdAt") {
-      const createdDate = moment(row.value).format("MM/D/YYYY");
+      const createdDate = moment(this.props.row.value).format("MM/D/YYYY");
       return (
         <div style={{ marginTop: 7 }}>{createdDate}</div>
       );
     }
     if (columnAccessor === "_id") {
-      const id = row.original._id;
+      const id = this.props.row.original._id;
       const truncatedId = id.substring(0, 4);
       return (
         <div style={{ marginTop: 7 }}>
@@ -66,50 +94,53 @@ class OrderTableColumn extends Component {
         </div>
       );
     }
-    if (columnAccessor === "billing[0].invoice.total") {
+    if (columnAccessor === "billingTotal") {
       return (
         <div style={{ marginTop: 7 }}>
-          <strong>{formatPriceString(row.original.billing[0].invoice.total)}</strong>
+          <strong>{formatPriceString(invoice.total)}</strong>
         </div>
       );
     }
-    if (columnAccessor === "shipping[0].workflow.status") {
+    if (columnAccessor === "shippingStatus") {
       return (
         <Badge
           className="orders-badge"
           badgeSize="large"
-          i18nKeyLabel={`cartDrawer.${row.value}`}
-          label={row.value}
-          status={shippingBadgeStatus()}
+          i18nKeyLabel={`admin.table.data.status.${this.props.row.value}`}
+          label={this.props.row.value}
+          status="basic"
         />
       );
     }
     if (columnAccessor === "workflow.status") {
       return (
-        <Badge
-          badgeSize="large"
-          i18nKeyLabel={`cartDrawer.${row.value}`}
-          label={row.value}
-          status={fulfillmentBadgeStatus(row.original)}
-        />
+        <div className="status-info">
+          <Badge
+            badgeSize="large"
+            i18nKeyLabel={`admin.table.data.status.${this.props.row.value}`}
+            label={this.props.row.value}
+            status={this.props.fulfillmentBadgeStatus(this.props.row.original)}
+          />
+        </div>
       );
     }
     if (columnAccessor === "") {
-      const startWorkflow = row.original.workflow.status === "new";
+      const startWorkflow = this.props.row.original.workflow.status === "new";
       const classes = classnames({
         "rui": true,
         "btn": true,
         "btn-success": startWorkflow
       });
+      const chevronDirection = i18next.dir() === "rtl" ? "left" : "right";
 
       return (
-        <button className={classes} onClick={() => handleClick(row.original, startWorkflow)}>
-          <Icon icon="fa fa-chevron-right" />
+        <button className={classes} onClick={() => this.props.handleClick(this.props.row.original, startWorkflow)}>
+          <Icon icon={`fa fa-chevron-${chevronDirection}`} />
         </button>
       );
     }
     return (
-      <span>{row.value}</span>
+      <span>{this.props.row.value}</span>
     );
   }
 }

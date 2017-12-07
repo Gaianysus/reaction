@@ -9,14 +9,14 @@ Reaction.registerPackage({
     route: "/tag/:slug?",
     name: "tag",
     template: "products",
-    workflow: "coreProductWorkflow"
+    workflow: "coreProductGridWorkflow"
   }, {
     route: "/products/createProduct",
     name: "createProduct",
     label: "Add Product",
     icon: "fa fa-plus",
     template: "productDetail",
-    provides: "shortcut",
+    provides: ["shortcut"],
     container: "addItem",
     priority: 1,
     permissions: [{
@@ -32,7 +32,7 @@ Reaction.registerPackage({
     enabled: true,
     structure: {
       template: "productDetail",
-      layoutHeader: "layoutHeader",
+      layoutHeader: "NavBar",
       layoutFooter: "",
       notFound: "productNotFound",
       dashboardHeader: "productDetailSimpleToolbar",
@@ -48,7 +48,7 @@ Reaction.registerPackage({
     enabled: true,
     structure: {
       template: "products",
-      layoutHeader: "layoutHeader",
+      layoutHeader: "NavBar",
       layoutFooter: "",
       notFound: "productNotFound",
       dashboardHeader: "gridPublishControls",

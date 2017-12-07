@@ -2,15 +2,13 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { Components } from "@reactioncommerce/reaction-components";
 import { Meteor } from "meteor/meteor";
-import LanguageContainer from "/client/modules/i18n/templates/header/containers/i18nContainer";
-import CurrencyContainer from "/client/modules/i18n/templates/currency/containers/currencyContainer";
 
 // TODO: Delete this, and do it the react way - Mike M.
 async function openSearchModalLegacy(props) {
   if (Meteor.isClient) {
     const { Blaze } = await import("meteor/blaze");
     const { Template } = await import("meteor/templating");
-    const { default: $ } = await import("jquery");
+    const { $ } = await import("meteor/jquery");
 
     const searchTemplate = Template[props.searchTemplate];
 
@@ -23,9 +21,26 @@ async function openSearchModalLegacy(props) {
 
 class NavBar extends Component {
   static propTypes = {
+    brandMedia: PropTypes.object,
     hasProperPermission: PropTypes.bool,
-    searchEnabled: PropTypes.bool
-  }
+    searchEnabled: PropTypes.bool,
+    shop: PropTypes.object,
+    visibility: PropTypes.object.isRequired
+  };
+
+  static defaultProps = {
+    visibility: {
+      hamburger: true,
+      brand: true,
+      tags: true,
+      search: true,
+      notifications: true,
+      languages: true,
+      currency: true,
+      mainDropdown: true,
+      cartContainer: true
+    }
+  };
 
   state = {
     navBarVisible: false
@@ -47,7 +62,7 @@ class NavBar extends Component {
   renderLanguage() {
     return (
       <div className="languages hidden-xs">
-        <LanguageContainer />
+        <Components.LanguageDropdown />
       </div>
     );
   }
@@ -55,14 +70,20 @@ class NavBar extends Component {
   renderCurrency() {
     return (
       <div className="currencies hidden-xs">
-        <CurrencyContainer />
+        <Components.CurrencyDropdown />
       </div>
     );
   }
 
   renderBrand() {
+    const shop = this.props.shop || { name: "" };
+    const logo = this.props.brandMedia && this.props.brandMedia.url();
+
     return (
-      <Components.Brand />
+      <Components.Brand
+        logo={logo}
+        title={shop.name}
+      />
     );
   }
 
@@ -129,15 +150,15 @@ class NavBar extends Component {
   render() {
     return (
       <div className="rui navbar">
-        {this.renderHamburgerButton()}
-        {this.renderBrand()}
-        {this.renderTagNav()}
-        {this.renderSearchButton()}
-        {this.renderNotificationIcon()}
-        {this.renderLanguage()}
-        {this.renderCurrency()}
-        {this.renderMainDropdown()}
-        {this.renderCartContainerAndPanel()}
+        {this.props.visibility.hamburger && this.renderHamburgerButton()}
+        {this.props.visibility.brand && this.renderBrand()}
+        {this.props.visibility.tags && this.renderTagNav()}
+        {this.props.visibility.search && this.renderSearchButton()}
+        {this.props.visibility.notifications && this.renderNotificationIcon()}
+        {this.props.visibility.languages && this.renderLanguage()}
+        {this.props.visibility.currency && this.renderCurrency()}
+        {this.props.visibility.mainDropdown && this.renderMainDropdown()}
+        {this.props.visibility.cartContainer && this.renderCartContainerAndPanel()}
       </div>
     );
   }

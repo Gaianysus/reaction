@@ -22,11 +22,11 @@ Meteor.publish("Accounts", function (userId) {
   }
 
   const nonAdminGroups = Collections.Groups.find({
-    name: { $in: ["customer", "guest"] },
+    name: { $in: ["guest"] },
     shopId
   }, {
     fields: { _id: 1 }
-  }).fetch().map(group => group._id);
+  }).fetch().map((group) => group._id);
 
   // global admin can get all accounts
   if (Roles.userIsInRole(this.userId, ["owner"], Roles.GLOBAL_GROUP)) {
@@ -35,7 +35,7 @@ Meteor.publish("Accounts", function (userId) {
     });
 
   // shop admin gets accounts for just this shop
-  } else if (Roles.userIsInRole(this.userId, ["admin", "owner"], shopId)) {
+  } else if (Roles.userIsInRole(this.userId, ["admin", "owner", "reaction-accounts"], shopId)) {
     return Collections.Accounts.find({
       groups: { $nin: nonAdminGroups },
       shopId: shopId

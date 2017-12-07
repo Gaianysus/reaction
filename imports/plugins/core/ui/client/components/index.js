@@ -1,6 +1,7 @@
 // export ButtonGroup from "./buttonGroup/buttonGroup";
 
 export { Alerts, Alert } from "./alerts";
+export { App } from "./app";
 export { default as Icon } from "./icon/icon";
 export { default as CircularProgress } from "./progress/circularProgress";
 export { default as Divider } from "./divider/divider";
@@ -9,6 +10,7 @@ export { default as Items } from "./items/items";
 export { default as Item } from "./items/item";
 export { default as TextField } from "./textfield/textfield";
 export { default as NumericInput } from "./numericInput/numericInput";
+export { default as NumberTypeInput  } from "./numericInput/numberTypeInput";
 export { Button, IconButton, EditButton, VisibilityButton, Handle, ButtonSelect } from "./button";
 export { Badge } from "./badge";
 export { Translation, Currency } from "./translation";
@@ -34,3 +36,6 @@ export { Overlay } from "./modal";
 export * from "./tabs";
 export { default as Select } from "./select/select.react";
 export { default as ClickToCopy } from "./clickToCopy/clickToCopy";
+export { ReactionAvatar } from "./avatar";
+export * from "./notFound";
+export { CalendarPicker } from "./calendarPicker/calendarPicker";

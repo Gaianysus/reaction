@@ -1,7 +1,9 @@
 import React, { Component } from "react";
+import classnames from "classnames";
 import PropTypes from "prop-types";
 import { SortableItem } from "../../containers";
 import { Components, registerComponent } from "@reactioncommerce/reaction-components";
+import { Reaction } from "/client/api";
 
 class MediaItem extends Component {
   handleMouseEnter = (event) => {
@@ -93,6 +95,7 @@ class MediaItem extends Component {
         alt=""
         className="img-responsive"
         src={this.source}
+        height={this.props.mediaHeight}
       />
     );
 
@@ -100,9 +103,10 @@ class MediaItem extends Component {
   }
 
   render() {
+    const classes = { "gallery-image": true, "admin-gallery-image": Reaction.hasAdminAccess() };
     const mediaElement = (
       <div
-        className="gallery-image"
+        className={classnames(classes)}
         onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave}
       >

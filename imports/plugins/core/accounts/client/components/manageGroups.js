@@ -1,10 +1,12 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { Components, registerComponent } from "@reactioncommerce/reaction-components";
+import { getInvitableGroups } from "../helpers/accountsHelper";
 
 class ManageGroups extends Component {
   static propTypes = {
     accounts: PropTypes.array,
+    adminGroups: PropTypes.array,
     group: PropTypes.object,
     groups: PropTypes.array,
     onChangeGroup: PropTypes.func
@@ -15,37 +17,34 @@ class ManageGroups extends Component {
 
     this.state = {
       accounts: props.accounts,
+      adminGroups: props.adminGroups,
       group: props.group,
       groups: props.groups
     };
   }
 
   componentWillReceiveProps(nextProps) {
-    const { group, groups, accounts } = nextProps;
-    this.setState({ group, groups, accounts });
-  }
-
-  get defaultInviteGroup() {
-    let defaultInviteGroup = {};
-    const groups = [];
-    this.state.groups.forEach((grp) => {
-      if (grp.slug !== "owner") {
-        groups.push(grp);
-      }
-    });
-
-    if (groups && groups.length > 0) {
-      defaultInviteGroup = groups[0];
-    }
-    return defaultInviteGroup;
+    const { group, groups, adminGroups, accounts } = nextProps;
+    this.setState({ group, groups, accounts, adminGroups });
   }
 
   render() {
+    // this gets a list of groups the user can invite to, we show only those in the dropdown
+    // see doc for getInvitableGroups in helpers/accountsHelper.js
+    const groupsInvitable = getInvitableGroups(this.state.adminGroups);
+
     return (
       <div className="groups-form">
-        <Components.AdminInviteForm groups={this.state.groups} defaultInviteGroup={this.defaultInviteGroup} />
+        { groupsInvitable && groupsInvitable.length &&
+          <Components.AdminInviteForm
+            {...this.props}
+            groups={groupsInvitable}
+          />
+        }
         <Components.EditGroup
-          groups={this.state.groups}
+          // filter out owner group from editable groups.
+          // The edit group meteor method also prevents editing owner group
+          groups={this.state.groups.filter(grp => grp.slug !== "owner")}
           selectedGroup={this.state.group}
           onChangeGroup={this.props.onChangeGroup}
         />

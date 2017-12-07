@@ -27,31 +27,15 @@
         },
         "groups": {
           "appearance": "videz",
-          "addUserError": "Napaka pri dodajanju uporabnika v skupino",
-          "addUserSuccess": "Dodan uporabnik v skupino",
-          "removeUserError": "Napaka pri odstranjevanju uporabnika v skupino",
-          "removeUserSuccess": "Uporabnik je bil uspešno odstranjen",
-          "connect": "Poveži",
-          "core": "Core",
-          "name": "Name",
           "email": "E-naslov",
-          "create": "Ustvari skupino",
-          "update": "Posodobi skupino",
-          "lastActive": "Zadnji aktiven",
+          "connect": "Poveži",
           "description": "Opis",
+          "core": "Core",
           "remove": "Odstraniti",
-          "newGroup": "Nova skupina",
-          "selectGroup": "Izberite Skupino",
-          "editGroups": "Urejanje skupin",
           "dashboard": "Nadzorna plošča",
-          "errorCreate": "Napaka pri ustvarjanju skupine",
-          "successCreate": "Skupina je uspešno ustvarila",
-          "errorUpdate": "Napaka pri posodabljanju skupine",
-          "successUpdate": "Skupina je bila uspešno posodobljena",
           "misc": "Razno",
           "paymentMethod": "Ponudniki plačilnih",
-          "utilities": "Pripomočki",
-          "marketplace": "Tržnica"
+          "utilities": "Pripomočki"
         },
         "settings": {
           "accountSettingsLabel": "Nastavitve računa",
@@ -75,8 +59,6 @@
       "app": {
         "add": "Dodaj",
         "editMode": "način urejanja",
-        "administratorView": "administrator Poglej",
-        "customerView": "Poglej Customer",
         "createContent": "ustvarjanje vsebine",
         "auto": "Auto",
         "save": "Shrani",
@@ -146,9 +128,7 @@
         "shopLocalizationSettingsSaved": "Nastavitve Shop lokalizacijo shranjene.",
         "shopLocalizationSettingsFailed": "Trgovina nastavitve lokalizacijo posodobitev ni uspela.",
         "shopPaymentMethodsSaved": "Trgovina nastavitve Načini plačila shranjene.",
-        "shopPaymentMethodsFailed": "Trgovina nastavitve Načini plačila posodobitev ni uspela.",
-        "shopBrandAssetsSaved": "Posodobljeno blagovno znamko",
-        "shopBrandAssetsFailed": "Sredstva blagovne znamke ni bilo mogoče posodobiti"
+        "shopPaymentMethodsFailed": "Trgovina nastavitve Načini plačila posodobitev ni uspela."
       },
       "notifications": {
         "body": {
@@ -158,7 +138,7 @@
           "viewAll": "Poglej vse"
         },
         "messages": {
-          "orderCancelled": "Vaše naročilo je bilo preklicano.",
+          "orderCanceled": "Vaše naročilo je bilo preklicano.",
           "newOrder": "Vaše naročilo je v obdelavi.",
           "forAdmin": "Imate novo naročilo.",
           "orderDelivered": "Vaše naročilo je bilo dostavljeno.",
@@ -175,7 +155,6 @@
         "whenYouAreDone": "Ko končate urejanje.",
         "tags": "oznake",
         "tagsAdd": "Dodaj oznako",
-        "tagsEdit": "Urejanje oznak",
         "tagExists": "Tag že obstaja, ali pa je prazna.",
         "tagInUse": "Tag je v uporabi in je ni mogoče izbrisati.",
         "dropFiles": "Spusti datoteke za nalaganje",
@@ -324,7 +303,11 @@
         "coreOrderWorkflow/created": "Ustvarjeno",
         "coreOrderWorkflow/processing": "Obravnavati",
         "coreOrderWorkflow/completed": "končan",
-        "coreOrderWorkflow/canceled": "preklicana"
+        "coreOrderWorkflow/canceled": "preklicana",
+        "coreOrderWorkflow/picked": "Izbrano",
+        "coreOrderWorkflow/packed": "Pakirano",
+        "coreOrderWorkflow/labeled": "Označeno",
+        "coreOrderWorkflow/shipped": "pošiljajo"
       },
       "cartSubTotals": {
         "discount": "popust",
@@ -375,14 +358,35 @@
         "payment": "plačilo",
         "itemsFrom": "element (-i) iz",
         "filter": {
+          "processing": "Obravnavati",
+          "status": "Status",
+          "dateRange": "Časovno obdobje",
+          "shippingStatus": "Status pošiljanja",
           "new": "New",
           "captured": "plačilo Zajeto",
-          "processing": "Obravnavati",
           "shipped": "pošiljajo",
           "completed": "končan",
           "canceled": "preklicana",
           "refunded": "Vrnjeno"
         },
+        "capture": "Ujemi",
+        "capturing": "Zajemanje",
+        "bulkActions": "Množične akcije",
+        "selected": "Izbrano",
+        "picked": "Izbrano",
+        "packed": "Pakirano",
+        "labeled": "Označeno",
+        "shipped": "pošiljajo",
+        "printInvoiceAndPickSheet": "Tiskanje računa in izbirni list",
+        "generateLabel": "Ustvari nalepko",
+        "approveBulkOrderAction": "Da, nastavi vse Izberite vse naloge",
+        "approveBulkOrderActionRegression": "Da, Regresiraj vse izbrane naloge",
+        "cancelBulkOrderAction": "Ne, prekliči",
+        "orderAlreadyInState": "{{orderText}} je že bil {{status}}",
+        "orderSetToState": "{{orderNumber}} {{orderText}} je nastavljen na {{status}}",
+        "skippedBulkOrdersAlert": "Zahtevali ste, da se {{selectedOrders}} {{orderText}} nastavi na status »{{status}}«, vendar pa {{numberOfSkippedOrders}} teh naročil {{skippedOrdersText}} ni v stanju »{{skippedState}}« in preskočite vse korake, ki vodijo do stanja »{{status}}«. Ste prepričani, da želite to storiti?",
+        "bulkOrdersRegressionAlert": "Približali boste {{ordersToRegress}} {{orderText}} nazaj v stanje »{{status}}«. Ali ste prepričani, da želite nadaljevati s to operacijo?",
+        "paymentCaptureSuccess": "Plačila uspešno ujeta",
         "showMore": "Pokaži več"
       },
       "orderShipping": {
@@ -434,7 +438,8 @@
         "createOrLogin": "Ustvarite račun ali pa se vpiši",
         "guestOrLogin": "Prijavite se, ali prevzeti kot gost",
         "continueAsGuest": "Nadaljuj kot gost",
-        "guestMessage": "Lahko checkout brez ustvarjanja računa. Imeli boste priložnost, da ustvarite račun pozneje."
+        "guestMessage": "Lahko checkout brez ustvarjanja računa. Imeli boste priložnost, da ustvarite račun pozneje.",
+        "addEmail": "Dodajanje e-pošte"
       },
       "addressBookGrid": {
         "addAddress": "Dodaj naslov",
@@ -576,9 +581,6 @@
       },
       "search": {
         "clearSearch": "Počisti",
-        "noProductsFound": "Ni izdelkov.",
-        "noOrdersFound": "Ni naročil.",
-        "noAccountsFound": "Ni računov.",
         "searchInputLabel": "Iskanje Reaction",
         "suggestedTags": "predlagane oznake",
         "searchTypeProducts": "izdelki",
@@ -591,29 +593,12 @@
           "lastName": "Priimek",
           "phone": "Telefon",
           "emails": "E-naslov"
-        },
-        "orderSearchResults": {
-          "orderId": "ID naročila",
-          "shopId": "trgovina ID",
-          "shippingAddress": "naslov",
-          "shippingCity": "Kraj",
-          "shippingRegion": "regija",
-          "shippingCountry": "Država",
-          "shippingPhone": "Telefon",
-          "shippingName": "Name",
-          "shippingStatus": "Status",
-          "billingAddress": "naslov",
-          "billingCity": "Kraj",
-          "billingRegion": "regija",
-          "billingCountry": "Država",
-          "billingPhone": "Telefon",
-          "billingStatus": "Status",
-          "userEmails": "E-naslov",
-          "orderDate": "Datum",
-          "orderTotal": "Skupaj"
         }
       },
       "accountsUI": {
+        "usersOrders": "Uporabnikova naročila",
+        "oops": "Ups!",
+        "nonExistentAccount": "Uporabnik, ki ga iščete, ne obstaja.",
         "members": "člani",
         "manage": "upravljanje",
         "guest": "Gost",
@@ -678,7 +663,6 @@
         },
         "error": {
           "emailRequired": "Email je obvezen vnos.",
-          "groupRequired": "Potrebna je skupina, ki ni privzeta skupina lastnikov.",
           "passwordRequired": "je potrebno geslo.",
           "passwordMustBeAtLeast6CharactersLong": "Geslo mora biti dolgo vsaj 6 znakov.",
           "passwordMustContainRequirements": "Geslo mora vsebovati vsaj eno številko ali simbol.",

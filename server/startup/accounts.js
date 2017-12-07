@@ -37,7 +37,7 @@ export default function () {
 
       // check if the email is verified
       if (!userEmail.length || !userEmail[0].verified) {
-        throw new Meteor.Error("403", "Oops! Please validate your email first.");
+        throw new Meteor.Error("access-denied", "Oops! Please validate your email first.");
       }
     }
 
@@ -82,8 +82,6 @@ export default function () {
   Accounts.onCreateUser((options, user) => {
     const shopId = Reaction.getShopId(); // current shop; not primary shop
     const groupToAddUser = options.groupId;
-    const defaultVisitorRole =  ["anonymous", "guest", "product", "tag", "index", "cart/checkout", "cart/completed"];
-    const defaultRoles =  ["guest", "account/profile", "product", "tag", "index", "cart/checkout", "cart/completed"];
     const roles = {};
     const additionals = {
       name: options && options.name,
@@ -108,12 +106,12 @@ export default function () {
           }
         }
       }
-
       // if we don't have user.services we're an anonymous user
       if (!user.services) {
         const group = Collections.Groups.findOne({ slug: "guest", shopId });
         const defaultGuestRoles = group.permissions;
-        roles[shopId] = defaultGuestRoles || defaultVisitorRole;
+        // if no defaultGuestRoles retrieved from DB, use the default Reaction set
+        roles[shopId] = defaultGuestRoles || Reaction.defaultVisitorRoles;
         additionals.groups = [group._id];
       } else {
         let group;
@@ -122,7 +120,8 @@ export default function () {
         } else {
           group = Collections.Groups.findOne({ slug: "customer", shopId });
         }
-        roles[shopId] = group.permissions || defaultRoles;
+        // if no group or customer permissions retrieved from DB, use the default Reaction customer set
+        roles[shopId] = group.permissions || Reaction.defaultCustomerRoles;
         additionals.groups = [group._id];
         // also add services with email defined to user.emails[]
         for (const service in user.services) {
@@ -147,6 +146,16 @@ export default function () {
               dprofile_image_url_https;
           } else if (user.services[service].profile_picture) {
             additionals.profile.picture = user.services[service].profile_picture;
+          }
+          // Correctly map Instagram profile data to Meteor user / Accounts
+          if (user.services.instagram) {
+            user.username = user.services[service].username;
+            user.name = user.services[service].full_name;
+            additionals.name = user.services[service].full_name;
+            additionals.profile.picture = user.services[service].profile_picture;
+            additionals.profile.bio = user.services[service].bio;
+            additionals.profile.name = user.services[service].full_name;
+            additionals.profile.username = user.services[service].username;
           }
         }
       }
@@ -220,10 +229,10 @@ export default function () {
       // in current version currentSessionId will be available for anonymous
       // users only, because it is unknown for me how to pass sessionId when user
       // logged in
-      const currentSessionId = options.methodArguments &&
-        options.methodArguments.length === 1 &&
-        options.methodArguments[0].sessionId;
-
+      let currentSessionId;
+      if (options.methodArguments && options.methodArguments.length === 1 && options.methodArguments[0].sessionId) {
+        currentSessionId = options.methodArguments[0].sessionId;
+      }
       // changing of workflow status from now happens within `cart/mergeCart`
       return Meteor.call("cart/mergeCart", cart._id, currentSessionId);
     }

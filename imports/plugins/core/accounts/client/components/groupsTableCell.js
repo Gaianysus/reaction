@@ -2,19 +2,21 @@ import { Meteor } from "meteor/meteor";
 import React from "react";
 import _ from "lodash";
 import PropTypes from "prop-types";
+import moment from "moment";
 import { Components, registerComponent } from "@reactioncommerce/reaction-components";
 import { Reaction } from "/client/api";
-import { getGravatar } from "../helpers/accountsHelper";
+import { getUserAvatar } from "/imports/plugins/core/accounts/client/helpers/helpers";
 
-const GroupsTableCell = ({ account, columnName, group, groups, handleRemoveUserFromGroup, handleUserGroupChange, ...props }) => {
+const GroupsTableCell = ({ account, columnName, group, adminGroups, handleRemoveUserFromGroup, handleUserGroupChange, ...props }) => {
   const email = _.get(account, "emails[0].address");
-
+  const groups = adminGroups;
+  const userAvatar = getUserAvatar(account);
   if (columnName === "name") {
     // use first part of email, if account has no name
     const name = account.name || email.split("@")[0];
     return (
       <div className="table-cell body-first">
-        <img className="accounts-img-tag" src={getGravatar(account)} />
+        {userAvatar}
         <span><b>{name}</b></span>
       </div>
     );
@@ -30,16 +32,16 @@ const GroupsTableCell = ({ account, columnName, group, groups, handleRemoveUserF
 
   if (columnName === "createdAt") {
     return (
-      <div className="table-cell body">
+      <div className="table-cell body created-at">
         <span>
-          {account.createdAt && account.createdAt.toDateString()}
+          {moment(account.createdAt).format("MMM Do")}
         </span>
       </div>
     );
   }
 
   if (columnName === "dropdown") {
-    const groupName = <p>{_.startCase(groups[0].name)}</p>;
+    const groupName = <span className="group-dropdown">{_.startCase(groups[0].name)}</span>;
     const ownerGroup = groups.find((grp) => grp.slug === "owner") || {};
     const hasOwnerAccess = Reaction.hasPermission("owner", Meteor.userId(), Reaction.getShopId());
 
@@ -63,14 +65,17 @@ const GroupsTableCell = ({ account, columnName, group, groups, handleRemoveUserF
       </div>
     );
 
-    // Permission check. Remove owner option, if user is not current owner
-    const dropOptions = groups.filter(grp => (grp.slug === "owner" && !hasOwnerAccess) ? false : true) || [];
+    // Permission check. Remove owner option, if user is not current owner.
+    // Also remove groups user does not have roles to manage. This is also checked on the server
+    const dropOptions = groups
+      .filter(grp => (grp.slug === "owner" && !hasOwnerAccess) ? false : true)
+      .filter(grp => Reaction.canInviteToGroup({ group: grp })) || [];
+
     if (dropOptions.length < 2) { return dropDownButton(); } // do not use dropdown if only one option
 
     return (
       <div className="group-dropdown">
         <Components.DropDownMenu
-          className="dropdown-item"
           buttonElement={dropDownButton(groups)}
           attachment="bottom right"
           targetAttachment="top right"
@@ -92,20 +97,7 @@ const GroupsTableCell = ({ account, columnName, group, groups, handleRemoveUserF
   }
 
   if (columnName === "button") {
-    if (group.slug === "owner") {
-      return null;
-    }
-    return (
-      <div className="group-table-button">
-        <Components.Button
-          status="danger"
-          onClick={handleRemoveUserFromGroup(account, group._id)}
-          bezelStyle="solid"
-          i18nKeyLabel="admin.groups.remove"
-          label="Remove"
-        />
-      </div>
-    );
+    return <Components.GroupsTableButton {...{ account, group, handleRemoveUserFromGroup }} />;
   }
 
   return null;
@@ -113,9 +105,9 @@ const GroupsTableCell = ({ account, columnName, group, groups, handleRemoveUserF
 
 GroupsTableCell.propTypes = {
   account: PropTypes.object,
+  adminGroups: PropTypes.array, // all admin groups
   columnName: PropTypes.string,
   group: PropTypes.object, // current group in interation
-  groups: PropTypes.array, // all available groups
   handleRemoveUserFromGroup: PropTypes.func,
   handleUserGroupChange: PropTypes.func,
   onMethodDone: PropTypes.func,

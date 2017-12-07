@@ -30,13 +30,14 @@ export default {
 
   init() {
     Tracker.autorun(() => {
-      // marketplaceSettings come over on the PrimarySHopPackages subscription
+      // marketplaceSettings come over on the PrimaryShopPackages subscription
       if (this.Subscriptions.PrimaryShopPackages.ready()) {
         if (!this.marketplace._ready) {
           const marketplacePkgSettings = this.getMarketplaceSettings();
           if (marketplacePkgSettings && marketplacePkgSettings.public) {
-            marketplacePkgSettings._ready = true;
+            this.marketplace._ready = true;
             this.marketplace = marketplacePkgSettings.public;
+            this.marketplace.enabled = true;
           }
         }
       }
@@ -46,46 +47,42 @@ export default {
     Tracker.autorun(() => {
       let shop;
       if (this.Subscriptions.PrimaryShop.ready()) {
-        // if we've already set the primaryShopId, carry on.
-        // otherwise we need to define it.
-        if (!this.primaryShopId) {
-          // There should only ever be one "primary" shop
-          shop = Shops.findOne({
-            shopType: "primary"
-          });
+        // There should only ever be one "primary" shop
+        shop = Shops.findOne({
+          shopType: "primary"
+        });
 
-          if (shop) {
-            this.primaryShopId = shop._id;
-            this.primaryShopName = shop.name;
+        if (shop) {
+          this.primaryShopId = shop._id;
+          this.primaryShopName = shop.name;
 
-            // We'll initialize locale and currency for the primary shop unless
-            // marketplace settings exist and merchantLocale is set to true
-            if (this.marketplace.merchantLocale !== true) {
-              // initialize local client Countries collection
-              if (!Countries.findOne()) {
-                createCountryCollection(shop.locales.countries);
-              }
+          // We'll initialize locale and currency for the primary shop unless
+          // marketplace settings exist and merchantLocale is set to true
+          if (this.marketplace.merchantLocale !== true) {
+            // initialize local client Countries collection
+            if (!Countries.findOne()) {
+              createCountryCollection(shop.locales.countries);
+            }
 
-              const locale = this.Locale.get() || {};
+            const locale = this.Locale.get() || {};
 
-              // fix for https://github.com/reactioncommerce/reaction/issues/248
-              // we need to keep an eye for rates changes
-              if (typeof locale.locale === "object" &&
+            // fix for https://github.com/reactioncommerce/reaction/issues/248
+            // we need to keep an eye for rates changes
+            if (typeof locale.locale === "object" &&
                  typeof locale.currency === "object" &&
                  typeof locale.locale.currency === "string") {
-                const localeCurrency = locale.locale.currency.split(",")[0];
-                if (typeof shop.currencies[localeCurrency] === "object") {
-                  if (typeof shop.currencies[localeCurrency].rate === "number") {
-                    locale.currency.rate = shop.currencies[localeCurrency].rate;
-                    localeDep.changed();
-                  }
+              const localeCurrency = locale.locale.currency.split(",")[0];
+              if (typeof shop.currencies[localeCurrency] === "object") {
+                if (typeof shop.currencies[localeCurrency].rate === "number") {
+                  locale.currency.rate = shop.currencies[localeCurrency].rate;
+                  localeDep.changed();
                 }
               }
-              // we are looking for a shopCurrency changes here
-              if (typeof locale.shopCurrency === "object") {
-                locale.shopCurrency = shop.currencies[shop.currency];
-                localeDep.changed();
-              }
+            }
+            // we are looking for a shopCurrency changes here
+            if (typeof locale.shopCurrency === "object") {
+              locale.shopCurrency = shop.currencies[shop.currency];
+              localeDep.changed();
             }
           }
         }
@@ -198,7 +195,10 @@ export default {
       } else {
         permissions = checkPermissions;
       }
-      // if the user has admin, owner permissions we'll always check if those roles are enough
+      // if the user has owner permissions we'll always check if those roles are enough
+      // By adding the "owner" role to the permissions list, we are making hasPermission always return
+      // true for "owners". This gives owners global access.
+      // TODO: Review this way of granting global access for owners
       permissions.push("owner");
       permissions = _.uniq(permissions);
 
@@ -303,8 +303,19 @@ export default {
     return this.hasPermission(ownerPermissions);
   },
 
-  hasAdminAccess() {
+  /**
+   * Checks to see if the user has admin permissions. If a shopId is optionally
+   * passed in, we check for that shopId, otherwise we check against the default
+   * @method hasAdminAccess
+   * @param  {string} [shopId] Optional shopId to check access against
+   * @return {Boolean} true if the user has admin or owner permission,
+   *                   otherwise false
+   */
+  hasAdminAccess(shopId) {
     const adminPermissions = ["owner", "admin"];
+    if (shopId) {
+      return this.hasPermission(adminPermissions, Meteor.userId(), shopId);
+    }
     return this.hasPermission(adminPermissions);
   },
 
@@ -487,6 +498,11 @@ export default {
     return Packages.findOne(query);
   },
 
+  getPackageSettingsWithOptions(options) {
+    const query = options;
+    return Packages.findOne(query);
+  },
+
   allowGuestCheckout() {
     let allowGuest = false;
     const settings = this.getShopSettings();
@@ -496,7 +512,32 @@ export default {
     }
     return allowGuest;
   },
+  /**
+   * canInviteToGroup - client (similar to server/api canInviteToGroup)
+   * @summary checks if the user making the request is allowed to make invitation to that group
+   * @param {Object} options -
+   * @param {Object} options.group - group to invite to
+   * @param {Object} options.user - user object  making the invite (Meteor.user())
+   * @return {Boolean} -
+   */
+  canInviteToGroup(options) {
+    const { group } = options;
+    let { user } = options;
+    if (!user) {
+      user = Meteor.user();
+    }
+    const userPermissions = user.roles[group.shopId];
+    const groupPermissions = group.permissions;
 
+    // granting invitation right for user with `owner` role in a shop
+    if (this.hasPermission(["owner"], Meteor.userId(), group.shopId)) {
+      return true;
+    }
+
+    // checks that userPermissions includes all elements from groupPermissions
+    // we are not using Reaction.hasPermission here because it returns true if the user has at least one
+    return _.difference(groupPermissions, userPermissions).length === 0;
+  },
   /**
    * @description showActionView
    *
@@ -517,6 +558,7 @@ export default {
   },
 
   setActionView(viewData) {
+    this.hideActionViewDetail();
     if (viewData) {
       let viewStack;
 
@@ -585,10 +627,7 @@ export default {
 
     Session.set("admin/showActionView", true);
     Session.set("admin/showActionViewDetail", typeof open === "boolean" ? open : true);
-
-    if (viewData) {
-      Session.set("admin/detailView", [viewData]);
-    }
+    Session.set("admin/detailView", [viewData]);
   },
 
   pushActionViewDetail(viewData) {
@@ -696,7 +735,7 @@ export default {
     // valid application
     if (reactionApp) {
       const settingsData = _.find(reactionApp.registry, function (item) {
-        return item.provides === provides && item.template === template;
+        return item.provides && item.provides.includes(provides) && item.template === template;
       });
       return settingsData;
     }

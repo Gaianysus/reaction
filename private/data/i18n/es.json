@@ -27,31 +27,15 @@
         },
         "groups": {
           "appearance": "Aspecto",
-          "addUserError": "Error al agregar usuario al grupo",
-          "addUserSuccess": "Agregado al grupo",
-          "removeUserError": "Error al quitar usuario al grupo",
-          "removeUserSuccess": "Usuario eliminado correctamente",
-          "connect": "Conectar",
-          "core": "Core",
-          "name": "Nombre",
           "email": "Ajustes del correo electrónico",
-          "create": "Crea un grupo",
-          "update": "Actualizar Grupo",
-          "lastActive": "Último Activo",
+          "connect": "Conectar",
           "description": "Descripción",
+          "core": "Core",
           "remove": "Eliminar",
-          "newGroup": "Nuevo grupo",
-          "selectGroup": "Seleccionar grupo",
-          "editGroups": "Editar grupos",
           "dashboard": "Panel principal",
-          "errorCreate": "Error al crear grupo",
-          "successCreate": "Grupo creado correctamente",
-          "errorUpdate": "Error al actualizar el grupo",
-          "successUpdate": "Grupo actualizado con éxito",
           "misc": "Variado",
           "paymentMethod": "Proveedores de pagos",
-          "utilities": "Herramientas",
-          "marketplace": "Mercado"
+          "utilities": "Herramientas"
         },
         "settings": {
           "accountSettingsLabel": "Opciones de cuenta",
@@ -75,8 +59,6 @@
       "app": {
         "add": "Añadir",
         "editMode": "Modo edición",
-        "administratorView": "administrador del Ver",
-        "customerView": "Ver al cliente",
         "createContent": "Crear contenido",
         "auto": "Auto",
         "save": "Guardar",
@@ -146,9 +128,7 @@
         "shopLocalizationSettingsSaved": "Opciones de ubicación de tienda guardadas.",
         "shopLocalizationSettingsFailed": "Actualización de las opciones de localización de la tienda fallida. ",
         "shopPaymentMethodsSaved": "Opciones de métodos de pago guardadas.",
-        "shopPaymentMethodsFailed": "Actualización de las opciones de métodos de pago fallida.",
-        "shopBrandAssetsSaved": "Activo actualizado de la marca",
-        "shopBrandAssetsFailed": "No se pudo actualizar el activo de la marca"
+        "shopPaymentMethodsFailed": "Actualización de las opciones de métodos de pago fallida."
       },
       "notifications": {
         "body": {
@@ -158,7 +138,7 @@
           "viewAll": "Ver todos"
         },
         "messages": {
-          "orderCancelled": "Su pedido fue cancelado.",
+          "orderCanceled": "Su pedido ha sido cancelado.",
           "newOrder": "Su pedido se está procesando.",
           "forAdmin": "Tienes un nuevo orden.",
           "orderDelivered": "Su pedido ha sido entregado.",
@@ -175,7 +155,6 @@
         "whenYouAreDone": "cuando termines de editar.",
         "tags": "Etiquetas",
         "tagsAdd": "Añadir etiqueta",
-        "tagsEdit": "Editar etiquetas",
         "tagExists": "La etiqueta ya existe o está vacía.",
         "tagInUse": "La etiqueta está en uso y no se puede borrar.",
         "dropFiles": "Arrastrar archivos para subirlos",
@@ -324,7 +303,11 @@
         "coreOrderWorkflow/created": "Creado",
         "coreOrderWorkflow/processing": "Procesando",
         "coreOrderWorkflow/completed": "Completado",
-        "coreOrderWorkflow/canceled": "Cancelado"
+        "coreOrderWorkflow/canceled": "Cancelado",
+        "coreOrderWorkflow/picked": "Escogido",
+        "coreOrderWorkflow/packed": "Lleno",
+        "coreOrderWorkflow/labeled": "Etiquetado",
+        "coreOrderWorkflow/shipped": "Enviado"
       },
       "cartSubTotals": {
         "discount": "Descuento",
@@ -375,14 +358,35 @@
         "payment": "Pago",
         "itemsFrom": "Artículo(s) de",
         "filter": {
+          "processing": "Procesando",
+          "status": "Estado",
+          "dateRange": "Rango de fechas",
+          "shippingStatus": "Estado del envío",
           "new": "Nuevo",
           "captured": "Pago registrado",
-          "processing": "Procesando",
           "shipped": "Enviado",
           "completed": "Completado",
           "canceled": "Cancelado",
           "refunded": "Reembolsado"
         },
+        "capture": "Capturar",
+        "capturing": "Captura",
+        "bulkActions": "Acciones masivas",
+        "selected": "Seleccionado",
+        "picked": "Escogido",
+        "packed": "Lleno",
+        "labeled": "Etiquetado",
+        "shipped": "Enviado",
+        "printInvoiceAndPickSheet": "Imprimir factura y hoja de selección",
+        "generateLabel": "Generar etiqueta",
+        "approveBulkOrderAction": "Sí, Definir todo Seleccionar todas las órdenes",
+        "approveBulkOrderActionRegression": "Sí, Regresar todas las órdenes seleccionadas",
+        "cancelBulkOrderAction": "No, Cancelar",
+        "orderAlreadyInState": "{{orderText}} ya ha sido {{status}}",
+        "orderSetToState": "{{orderNumber}} {{orderText}} establecido en {{status}}",
+        "skippedBulkOrdersAlert": "Ha solicitado que {{selectedOrders}} {{orderText}} se establezca en el estado '{{status}}', pero {{numberOfSkippedOrders}} de estos pedidos {{skippedOrdersText}} no está en el estado '{{skippedState}}' y omitirá todos los pasos que conducen al estado '{{status}}'. ¿Seguro que quieres hacer esto?",
+        "bulkOrdersRegressionAlert": "Estás a punto de regresar {{ordersToRegress}} {{orderText}} de nuevo al estado '{{status}}'. ¿Está seguro de que desea continuar con esta operación?",
+        "paymentCaptureSuccess": "Pagos capturados con éxito",
         "showMore": "Mostrar Más"
       },
       "orderShipping": {
@@ -434,7 +438,8 @@
         "createOrLogin": "Crea una cuenta o inicia sesión",
         "guestOrLogin": "Iniciar sesión o realizar compra como invitado",
         "continueAsGuest": "Continuar como invitado",
-        "guestMessage": "Puedes realizar la compra sin crear una cuenta. Podrás crear la cuenta más tarde."
+        "guestMessage": "Puedes realizar la compra sin crear una cuenta. Podrás crear la cuenta más tarde.",
+        "addEmail": "Añadir correo electrónico"
       },
       "addressBookGrid": {
         "addAddress": "Añadir dirección",
@@ -576,9 +581,6 @@
       },
       "search": {
         "clearSearch": "Borrar",
-        "noProductsFound": "No se encontraron productos",
-        "noOrdersFound": "No hay pedidos",
-        "noAccountsFound": "No hay cuentas.",
         "searchInputLabel": "Buscar reacción ",
         "suggestedTags": "Etiquetas sugeridas",
         "searchTypeProducts": "Productos",
@@ -591,29 +593,12 @@
           "lastName": "Apellido",
           "phone": "Teléfono",
           "emails": "Correo electrónico"
-        },
-        "orderSearchResults": {
-          "orderId": "ID de pedido",
-          "shopId": "ID de tienda",
-          "shippingAddress": "Dirección",
-          "shippingCity": "Ciudad",
-          "shippingRegion": "Región",
-          "shippingCountry": "País",
-          "shippingPhone": "Teléfono",
-          "shippingName": "Nombre",
-          "shippingStatus": "Estado",
-          "billingAddress": "Dirección",
-          "billingCity": "Ciudad\n",
-          "billingRegion": "Región",
-          "billingCountry": "País",
-          "billingPhone": "Teléfono",
-          "billingStatus": "Estado",
-          "userEmails": "Correo electrónico",
-          "orderDate": "Fecha",
-          "orderTotal": "Total"
         }
       },
       "accountsUI": {
+        "usersOrders": "Pedidos del usuario",
+        "oops": "¡Vaya!",
+        "nonExistentAccount": "El usuario que estás buscando no existe.",
         "members": "Miembros",
         "manage": "Gestionar",
         "guest": "Invitado",
@@ -678,7 +663,6 @@
         },
         "error": {
           "emailRequired": "Se necesita una dirección de correo electrónico.",
-          "groupRequired": "Se requiere un grupo que no sea el grupo de propietarios predeterminado.",
           "passwordRequired": "Se necesita una contraseña.",
           "passwordMustBeAtLeast6CharactersLong": "La contraseña debe tener como mínimo 6 caracteres.",
           "passwordMustContainRequirements": "La contraseña debe contener al menos un número o un símbolo.",

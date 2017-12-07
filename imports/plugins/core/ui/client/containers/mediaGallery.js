@@ -24,7 +24,7 @@ function uploadHandler(files) {
       autoHide: true
     });
   }
-  const variantId = variant.ancestors[0];
+  const variantId = variant._id;
   const shopId = ReactionProduct.selectedProduct().shopId || Reaction.getShopId();
   const userId = Meteor.userId();
   let count = Media.find({
@@ -166,23 +166,29 @@ const wrapComponent = (Comp) => (
 
       return (
         <Measure
-          onMeasure={(dimensions) => {
-            this.setState({ dimensions });
+          bounds
+          onResize={(contentRect) => {
+            this.setState({ dimensions: contentRect.bounds });
           }}
         >
-          <Comp
-            allowFeaturedMediaHover={this.allowFeaturedMediaHover}
-            featuredMedia={this.state.featuredMedia}
-            onDrop={this.handleDrop}
-            onMouseEnterMedia={this.handleMouseEnterMedia}
-            onMouseLeaveMedia={this.handleMouseLeaveMedia}
-            onMoveMedia={this.handleMoveMedia}
-            onRemoveMedia={this.handleRemoveMedia}
-            {...this.props}
-            media={this.media}
-            mediaGalleryHeight={height}
-            mediaGalleryWidth={width}
-          />
+
+          {({ measureRef }) =>
+            <div ref={measureRef}>
+              <Comp
+                allowFeaturedMediaHover={this.allowFeaturedMediaHover}
+                featuredMedia={this.state.featuredMedia}
+                onDrop={this.handleDrop}
+                onMouseEnterMedia={this.handleMouseEnterMedia}
+                onMouseLeaveMedia={this.handleMouseLeaveMedia}
+                onMoveMedia={this.handleMoveMedia}
+                onRemoveMedia={this.handleRemoveMedia}
+                {...this.props}
+                media={this.media}
+                mediaGalleryHeight={height}
+                mediaGalleryWidth={width}
+              />
+            </div>
+          }
         </Measure>
       );
     }

@@ -4,7 +4,7 @@ Reaction.registerPackage({
   label: "Marketplace",
   name: "reaction-marketplace",
   icon: "fa fa-globe",
-  autoEnable: true,
+  autoEnable: false,
   settings: {
     name: "Marketplace",
     enabled: true,
@@ -29,11 +29,13 @@ Reaction.registerPackage({
           "reaction-product-simple",
           "reaction-product-variant",
           "reaction-notification",
+          "reaction-marketplace",
           "reaction-analytics",
           "reaction-inventory",
           "reaction-sms",
           "reaction-social",
-          "reaction-stripe-connect",
+          "reaction-stripe",
+          "reaction-taxes",
           "discount-codes"]
       }, {
         shopType: "affiliate",
@@ -47,7 +49,6 @@ Reaction.registerPackage({
       }]
     },
     public: {
-      allowGuestSellers: true, // TODO: Eliminate in favor of marketplace.enabled and allowMerchantSignup
       allowMerchantSignup: false, // Merchants can sign up without an invite
       marketplaceNakedRoutes: true, // Routes to the primary marketplace shop should not use shop prefix
       merchantCart: false, // Unique cart for each merchant
@@ -62,15 +63,28 @@ Reaction.registerPackage({
   registry: [{
     label: "Marketplace",
     icon: "fa fa-globe",
-    provides: "shopSettings",
+    provides: ["shopSettings"],
     container: "dashboard",
-    template: "marketplaceShopSettings"
+    template: "marketplaceShopSettings",
+    showForShopTypes: ["primary"]
   }, {
-    route: "shop/:shopId",
-    name: "shop",
-    template: "products",
-    workflow: "coreProductWorkflow",
-    priority: 1
+    route: "shop/settings/shops",
+    template: "MarketplaceShops",
+    name: "marketplaceShops",
+    label: "Marketplace Shops",
+    icon: "fa fa-globe",
+    provides: ["settings"],
+    container: "dashboard",
+    showForShopTypes: ["primary"],
+    meta: {
+      actionView: {
+        dashboardSize: "lg"
+      }
+    },
+    permissions: [{
+      label: "Marketplace Shops",
+      permission: "marketplaceShops"
+    }]
   }, {
     // does this work?
     // override default shop settings
@@ -79,9 +93,17 @@ Reaction.registerPackage({
     name: "sellerShopSettings",
     label: "Shop Settings",
     icon: "fa fa-th",
-    provides: "shortcut",
+    provides: ["shortcut"],
     container: "dashboard",
     audience: ["seller"],
     priority: 1
+  }, {
+    // This provides the settings container for marketplaceMerchantSettings
+    label: "My Shop Settings",
+    icon: "fa fa-briefcase",
+    provides: ["shopSettings"],
+    container: "dashboard",
+    template: "marketplaceMerchantSettings",
+    hideForShopTypes: ["primary"]
   }]
 });

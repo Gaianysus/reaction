@@ -9,7 +9,7 @@ Reaction.registerPackage({
     name: "Dashboard"
   },
   registry: [{
-    provides: "dashboard",
+    provides: ["dashboard"],
     workflow: "coreDashboardWorkflow",
     name: "dashboardPackages",
     label: "Core",
@@ -25,7 +25,7 @@ Reaction.registerPackage({
     route: "/dashboard",
     name: "dashboard",
     workflow: "coreDashboardWorkflow",
-    provides: "shortcut",
+    provides: ["shortcut"],
     label: "Dashboard",
     template: "dashboardPackages",
     icon: "icon-reaction-logo",
@@ -40,8 +40,14 @@ Reaction.registerPackage({
     name: "shopSettings",
     label: "Shop Settings",
     icon: "fa fa-th",
-    provides: "settings",
+    provides: ["settings"],
     container: "dashboard"
+  }, {
+    label: "Options",
+    provides: ["shopSettings"],
+    container: "dashboard",
+    template: "optionsShopSettings",
+    showForShopTypes: ["primary"]
   }],
   layout: [{
     layout: "coreLayout",
@@ -50,7 +56,7 @@ Reaction.registerPackage({
     enabled: true,
     structure: {
       template: "dashboardPackages",
-      layoutHeader: "layoutHeader",
+      layoutHeader: "NavBar",
       layoutFooter: "",
       notFound: "notFound",
       dashboardHeader: "dashboardHeader",

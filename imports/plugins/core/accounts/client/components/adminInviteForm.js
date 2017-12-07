@@ -1,28 +1,28 @@
+import { Meteor } from "meteor/meteor";
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
 import { Components, registerComponent } from "@reactioncommerce/reaction-components";
-import { Reaction } from "/client/api";
-import { Meteor } from "meteor/meteor";
+import { default as ReactionAlerts } from "/imports/plugins/core/layout/client/templates/layout/alerts/inlineAlerts";
+import { Reaction, i18next } from "/client/api";
+import { getDefaultUserInviteGroup } from "../helpers/accountsHelper";
 
 class AdminInviteForm extends Component {
   static propTypes = {
-    defaultInviteGroup: PropTypes.object,
+    canInviteToGroup: PropTypes.func,
     groups: PropTypes.array
   };
 
   constructor(props) {
     super(props);
-    const { defaultInviteGroup, groups } = props;
-    const groupsInvitable = groups.filter((grp) => grp.slug !== "owner");
+    const { groups } = props;
 
     this.state = {
-      groups: groupsInvitable,
-      defaultInviteGroup,
+      alertId: "admin-invite-form",
+      groups,
       name: "",
       email: "",
-      group: "",
-      alertArray: []
+      group: getDefaultUserInviteGroup(groups)
     };
 
     this.onChange = this.onChange.bind(this);
@@ -30,9 +30,8 @@ class AdminInviteForm extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { groups, defaultInviteGroup } = nextProps;
-    const groupsInvitable = groups.filter((grp) => grp.slug !== "owner");
-    this.setState({ groups: groupsInvitable, defaultInviteGroup });
+    const { groups } = nextProps;
+    this.setState({ groups, group: getDefaultUserInviteGroup(groups) });
   }
 
   onChange(event) {
@@ -51,60 +50,52 @@ class AdminInviteForm extends Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    const { name, email, group, defaultInviteGroup } = this.state;
+    const { name, email, group, alertId } = this.state;
+    const alertOptions = { placement: alertId, id: alertId, autoHide: 4000 };
 
-    if (!group._id && !defaultInviteGroup._id) {
-      return this.setState({
-        alertArray: [{
-          mode: "danger",
-          options: { autoHide: 4000, i18nKey: "accountsUI.error.groupRequired" }
-        }]
-      });
+    // if no group is selected, show alert that group is required to send invitation
+    if (!group._id) {
+      return ReactionAlerts.add(
+        "A group is required to invite an admin",
+        "danger",
+        Object.assign({}, alertOptions, { i18nKey: "admin.groupsInvite.groupRequired" })
+      );
     }
-    const finalGroupId = group._id || defaultInviteGroup._id;
-    const options = { email, name, shopId: Reaction.getShopId(), groupId: finalGroupId };
+
+    const options = { email, name, shopId: Reaction.getShopId(), groupId: group._id  };
     return Meteor.call("accounts/inviteShopMember", options, (error, result) => {
-      let newAlert;
-      let message = "";
       if (error) {
         let messageKey;
+        // switching to use of package i18n keys (groupsInvite. namespace)
         if (error.reason === "Unable to send invitation email.") {
-          messageKey = "accountsUI.error.unableToSendInvitationEmail";
-        } else if (error.reason === "A user with this email address already exists") {
-          messageKey = "accountsUI.error.userWithEmailAlreadyExists";
+          messageKey = "admin.groupsInvite.unableToSendInvitationEmail";
         } else if (error.reason === "cannot directly invite owner") {
           messageKey = "admin.groupsInvite.inviteOwnerError";
-        } else if (error.reason === "") {
-          message = error.reason;
+        } else if (error.reason === "cannot invite to group") {
+          messageKey = "admin.groupsInvite.cannotInvite";
+        } else if (error.reason === "Need to set a username or email") {
+          messageKey = "admin.groupsInvite.NeedToSetUsernameOrEmail";
         } else {
-          messageKey = "accountsUI.error.errorSendingEmail";
+          messageKey = "admin.groupsInvite.errorSendingInvite";
         }
-        newAlert = {
-          message,
-          mode: "danger",
-          options: { autoHide: 4000, i18nKey: messageKey }
-        };
+        ReactionAlerts.add(error.reason, "danger", Object.assign({}, alertOptions, { i18nKey: messageKey }));
       }
 
       if (result) {
-        newAlert = {
-          mode: "success",
-          options: { autoHide: 4000, i18nKey: "accountsUI.info.invitationSent" }
-        };
+        this.setState({ name: "", email: "" });
+        Alerts.toast(i18next.t("accountsUI.info.invitationSent"), "success");
       }
-
-      return this.setState({ name: "", email: "", alertArray: [...this.state.alertArray, newAlert] });
     });
   }
 
   renderDropDownButton() {
-    const { defaultInviteGroup, group } = this.state;
-    const buttonGroup = group || defaultInviteGroup;
-    if (!buttonGroup._id) {
+    const { group } = this.state;
+
+    if (!group._id) {
       return null;
     }
     const buttonElement = (opt) => (
-      <Components.Button bezelStyle="solid" label={buttonGroup.name && _.startCase(buttonGroup.name)} >
+      <Components.Button bezelStyle="solid" label={group.name && _.startCase(group.name)} >
         &nbsp;
         {opt && opt.length && // add icon only if there's a list of options
           <i className="fa fa-chevron-down" />
@@ -113,15 +104,15 @@ class AdminInviteForm extends Component {
     );
 
     // current selected option and "owner" should not show in list options
-    const dropOptions = this.state.groups.filter((grp) => grp._id !== buttonGroup._id);
+    const dropOptions = this.state.groups.filter((grp) => grp._id !== group._id);
     if (!dropOptions.length) { return buttonElement(); } // do not use dropdown if only one option
 
     return (
       <Components.DropDownMenu
         buttonElement={buttonElement(dropOptions)}
         onChange={this.handleGroupSelect}
-        attachment="bottom right"
-        targetAttachment="top right"
+        attachment="top right"
+        targetAttachment="bottom right"
       >
         {dropOptions
           .map((grp, index) => (
@@ -138,8 +129,8 @@ class AdminInviteForm extends Component {
 
   renderForm() {
     return (
-      <div className="panel panel-default admin-invite-form">
-        <Components.Alerts alerts={this.state.alertArray} onAlertRemove={this.removeAlert} />
+      <div className="admin-invite-form">
+        <Components.Alerts placement={this.state.alertId} id={this.state.alertId} onAlertRemove={this.removeAlert} />
         <div className="panel-body">
           <form className="">
             <div className="form-group">
@@ -187,7 +178,7 @@ class AdminInviteForm extends Component {
 
   render() {
     return (
-      <Components.Card expanded={true}>
+      <Components.Card>
         <Components.CardHeader
           actAsExpander={true}
           data-i18n="accountsUI.info.addAdminUser"

@@ -15,7 +15,7 @@ const handleAddProduct = () => {
       let currentTagId;
 
       if (error) {
-        throw new Meteor.Error("createProduct error", error);
+        throw new Meteor.Error("create-product-error", error);
       } else if (productId) {
         currentTagId = Session.get("currentTag");
         currentTag = Tags.findOne(currentTagId);
@@ -29,26 +29,6 @@ const handleAddProduct = () => {
       }
     }
   });
-};
-
-const handleViewContextChange = (event, value) => {
-  Reaction.setUserPreferences("reaction-dashboard", "viewAs", value);
-
-  if (Reaction.isPreview() === true) {
-    // Save last action view state
-    const saveActionViewState = Reaction.getActionView();
-    Reaction.setUserPreferences("reaction-dashboard", "savedActionViewState", saveActionViewState);
-
-    // hideActionView during isPreview === true
-    Reaction.hideActionView();
-  } else {
-    // // Reload previous actionView, if saved. Otherwise, don't show.
-    // const savedActionViewState = Reaction.getUserPreferences("reaction-dashboard", "savedActionViewState");
-    //
-    // if (savedActionViewState) {
-    //   Reaction.showActionView(savedActionViewState);
-    // }
-  }
 };
 
 /**
@@ -71,7 +51,12 @@ function composer(props, onData) {
 
   if (user && user.roles) {
     // Get all shops for which user has roles
-    shops = Shops.find({ _id: { $in: Object.keys(user.roles) } }).fetch();
+    shops = Shops.find({
+      $and: [
+        { _id: { $in: Object.keys(user.roles) } },
+        { $or: [{ "workflow.status": "active" }, { _id: Reaction.getPrimaryShopId() }] }
+      ]
+    }).fetch();
   }
 
   // Standard variables
@@ -83,8 +68,7 @@ function composer(props, onData) {
     for (const item of registryItems) {
       if (Reaction.hasPermission(item.route, Meteor.userId())) {
         let icon = item.icon;
-
-        if (!item.icon && item.provides === "settings") {
+        if (!item.icon && item.provides && item.provides.includes("settings")) {
           icon = "gear";
         }
 
@@ -115,7 +99,7 @@ function composer(props, onData) {
     // Callbacks
     onAddProduct: handleAddProduct,
     onShopSelectChange: handleShopSelectChange,
-    onViewContextChange: handleViewContextChange
+    onViewContextChange: props.handleViewContextChange
   });
 }
 

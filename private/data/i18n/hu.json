@@ -27,31 +27,15 @@
         },
         "groups": {
           "appearance": "Kinézet",
-          "addUserError": "Hiba történt a felhasználó csoportosításához",
-          "addUserSuccess": "Hozzáadta a felhasználót a csoporthoz",
-          "removeUserError": "Hiba történt a felhasználó csoportjának eltávolításakor",
-          "removeUserSuccess": "A felhasználó sikeresen eltávolítva",
-          "connect": "Csatlakozás",
-          "core": "Mag",
-          "name": "Név",
           "email": "E-mail",
-          "create": "Csoport létrehozása",
-          "update": "Csoport frissítése",
-          "lastActive": "Utoljára aktív",
+          "connect": "Csatlakozás",
           "description": "Adj hozzá termékleírást",
+          "core": "Mag",
           "remove": "Távolítsuk",
-          "newGroup": "Új csoport",
-          "selectGroup": "Válasszon csoportot",
-          "editGroups": "Csoportok szerkesztése",
           "dashboard": "Műszerfal",
-          "errorCreate": "Hiba történt a csoport létrehozásában",
-          "successCreate": "A csoport sikeresen létrehozva",
-          "errorUpdate": "Hiba történt a csoport frissítésével",
-          "successUpdate": "A csoport sikeresen frissült",
           "misc": "Egyéb",
           "paymentMethod": "fizetési szolgáltatók",
-          "utilities": "segédprogramok",
-          "marketplace": "Piactér"
+          "utilities": "segédprogramok"
         },
         "settings": {
           "accountSettingsLabel": "Fiók beállítások",
@@ -75,8 +59,6 @@
       "app": {
         "add": "Add",
         "editMode": "Szerkesztés módban",
-        "administratorView": "Administrator megtekintése",
-        "customerView": "ügyfélkép",
         "createContent": "tartalom létrehozása",
         "auto": "kocsi",
         "save": "Mentés",
@@ -146,9 +128,7 @@
         "shopLocalizationSettingsSaved": "Shop lokalizációs beállítások mentve.",
         "shopLocalizationSettingsFailed": "Shop lokalizációs beállítások frissítése nem sikerült.",
         "shopPaymentMethodsSaved": "Shop Fizetési módok beállításai mentve.",
-        "shopPaymentMethodsFailed": "Shop Fizetési módok beállításait sikertelen volt.",
-        "shopBrandAssetsSaved": "Frissített márkaeszköz",
-        "shopBrandAssetsFailed": "Nem sikerült frissíteni a márkaelemet"
+        "shopPaymentMethodsFailed": "Shop Fizetési módok beállításait sikertelen volt."
       },
       "notifications": {
         "body": {
@@ -158,7 +138,7 @@
           "viewAll": "Összes megtekintése"
         },
         "messages": {
-          "orderCancelled": "A rendelést törölték.",
+          "orderCanceled": "A rendelést törölték.",
           "newOrder": "A rendelés feldolgozása folyamatban van.",
           "forAdmin": "Van egy új rendet.",
           "orderDelivered": "Rendelését szállítani.",
@@ -175,7 +155,6 @@
         "whenYouAreDone": "amikor kész a szerkesztés.",
         "tags": "Címkék",
         "tagsAdd": "Címke hozzáadása",
-        "tagsEdit": "címkék szerkesztése",
         "tagExists": "Tag már létezik, vagy üres.",
         "tagInUse": "Tag használatban van, és nem lehet törölni.",
         "dropFiles": "Drop fájlokat feltölteni",
@@ -309,8 +288,8 @@
         "details": "Részletek",
         "disable": "Kikapcsolja",
         "disableConfirm": "Biztos benne, hogy le akarja tiltani {{app}}?",
-        "pkgEnabled": " most engedélyezett.",
-        "pkgDisabled": " most nem engedélyezett."
+        "pkgEnabled": "{{app}} most engedélyezett.",
+        "pkgDisabled": "{{app}} most nem engedélyezett."
       },
       "gridSettingsPanel": {
         "title": "rács beállításai",
@@ -324,7 +303,11 @@
         "coreOrderWorkflow/created": "Létrehozott",
         "coreOrderWorkflow/processing": "Feldolgozás",
         "coreOrderWorkflow/completed": "befejezték",
-        "coreOrderWorkflow/canceled": "Törölve"
+        "coreOrderWorkflow/canceled": "Törölve",
+        "coreOrderWorkflow/picked": "Válogatott",
+        "coreOrderWorkflow/packed": "Csomagolt",
+        "coreOrderWorkflow/labeled": "Jelzett",
+        "coreOrderWorkflow/shipped": "Kiszállított"
       },
       "cartSubTotals": {
         "discount": "Kedvezmény",
@@ -375,14 +358,35 @@
         "payment": "Fizetés",
         "itemsFrom": "elem (ek) re",
         "filter": {
+          "processing": "Feldolgozás",
+          "status": "Állapot",
+          "dateRange": "Időintervallum",
+          "shippingStatus": "Szállítási állapot",
           "new": "Új",
           "captured": "fizetési rögzített",
-          "processing": "Feldolgozás",
           "shipped": "Kiszállított",
           "completed": "befejezték",
           "canceled": "Törölve",
           "refunded": "Visszautalva"
         },
+        "capture": "Elfog",
+        "capturing": "rögzítése",
+        "bulkActions": "Ömlesztett műveletek",
+        "selected": "Kiválasztott",
+        "picked": "Válogatott",
+        "packed": "Csomagolt",
+        "labeled": "Jelzett",
+        "shipped": "Kiszállított",
+        "printInvoiceAndPickSheet": "Nyomtassa ki a számlát és válasszon lapot",
+        "generateLabel": "Címke létrehozása",
+        "approveBulkOrderAction": "Igen, Állítsa be az összes rendelés kiválasztását",
+        "approveBulkOrderActionRegression": "Igen, Regress All Selected Orders",
+        "cancelBulkOrderAction": "Nem, Mégse",
+        "orderAlreadyInState": "A {{orderText}} már {{status}} volt",
+        "orderSetToState": "{{orderNumber}} {{orderText}} beállítva: {{status}}",
+        "skippedBulkOrdersAlert": "Kérted, hogy a {{selectedOrders}} {{orderText}} beállítása a \"{{status}}\" állapotra legyen állítva, de a (z) {{skippedOrdersText}} megrendelések közül a {{numberOfSkippedOrders}} nem szerepel a \"{{skippedState}}\" állapotban, és kihagyja a {{status}} állapotra vezető összes lépést. Biztosan meg akarja csinálni?",
+        "bulkOrdersRegressionAlert": "A {{ordersToRegress}} {{orderText}} regresszióját vissza kívánja állítani a \"{{status}}\" állapotba. Biztosan folytatja ezt a műveletet?",
+        "paymentCaptureSuccess": "A kifizetések sikeresen rögzítettek",
         "showMore": "Mutass többet"
       },
       "orderShipping": {
@@ -434,7 +438,8 @@
         "createOrLogin": "Hozz létre fiókot vagy lépj be",
         "guestOrLogin": "Lépj be vagy add fel rendelésed, mint vendég",
         "continueAsGuest": "Folytasd mint Vendég",
-        "guestMessage": "Rendelésed feladhatod fiók létrehozása nélkül is. Erre lesz lehetőséged később."
+        "guestMessage": "Rendelésed feladhatod fiók létrehozása nélkül is. Erre lesz lehetőséged később.",
+        "addEmail": "E-mail hozzáadása"
       },
       "addressBookGrid": {
         "addAddress": "Cím",
@@ -576,9 +581,6 @@
       },
       "search": {
         "clearSearch": "Egyértelmű",
-        "noProductsFound": "Nem talált termékek.",
-        "noOrdersFound": "Nem talált megbízásokat.",
-        "noAccountsFound": "Nem található fiók.",
         "searchInputLabel": "Keresés reakció",
         "suggestedTags": "javasolt címkék",
         "searchTypeProducts": "Termékek",
@@ -591,29 +593,12 @@
           "lastName": "Vezetéknév",
           "phone": "Telefon",
           "emails": "E-mail"
-        },
-        "orderSearchResults": {
-          "orderId": "Rendelés azonosító",
-          "shopId": "Shop ID",
-          "shippingAddress": "Lakcim",
-          "shippingCity": "City",
-          "shippingRegion": "Vidék",
-          "shippingCountry": "Ország",
-          "shippingPhone": "Telefon",
-          "shippingName": "Név",
-          "shippingStatus": "Állapot",
-          "billingAddress": "Lakcim",
-          "billingCity": "City",
-          "billingRegion": "Vidék",
-          "billingCountry": "Ország",
-          "billingPhone": "Telefon",
-          "billingStatus": "Állapot",
-          "userEmails": "E-mail",
-          "orderDate": "Dátum",
-          "orderTotal": "Teljes"
         }
       },
       "accountsUI": {
+        "usersOrders": "Felhasználó utasításai",
+        "oops": "Baj van!",
+        "nonExistentAccount": "A keresett felhasználó nem létezik.",
         "members": "Belépés",
         "manage": "kezel",
         "guest": "Vendég",
@@ -678,7 +663,6 @@
         },
         "error": {
           "emailRequired": "Email megadása kötelező.",
-          "groupRequired": "Az alapértelmezett tulajdonoscsoporttól eltérő csoportra van szükség.",
           "passwordRequired": "Jelszó szükséges.",
           "passwordMustBeAtLeast6CharactersLong": "A jelszónak legalább 6 karakterből kell állnia.",
           "passwordMustContainRequirements": "A jelszónak tartalmaznia kell legalább egy számot vagy szimbólumot.",

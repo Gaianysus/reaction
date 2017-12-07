@@ -1,6 +1,5 @@
 /* eslint camelcase: 0 */
 import moment from "moment";
-import _ from "lodash";
 import { Meteor } from "meteor/meteor";
 import { check, Match } from "meteor/check";
 import { Reaction, Logger } from "/server/api";
@@ -26,7 +25,7 @@ const supportedLanguages = ["da", "nl", "en", "fi", "fr", "de", "hu", "it", "nb"
 
 function filterFields(customFields) {
   const fieldNames = [];
-  const fieldKeys = _.keys(customFields);
+  const fieldKeys = Object.keys(customFields);
   for (const fieldKey of fieldKeys) {
     if (customFields[fieldKey]) {
       fieldNames.push(fieldKey);
@@ -38,8 +37,8 @@ function filterFields(customFields) {
 // get the weights for all enabled fields
 function getScores(customFields, settings, collection = "products") {
   const weightObject = {};
-  for (const weight of _.keys(settings[collection].weights)) {
-    if (_.includes(customFields, weight)) {
+  for (const weight of Object.keys(settings[collection].weights)) {
+    if (customFields.includes(weight)) {
       weightObject[weight] = settings[collection].weights[weight];
     }
   }
@@ -49,10 +48,29 @@ function getScores(customFields, settings, collection = "products") {
 function getSearchLanguage() {
   const shopId = Reaction.getShopId();
   const shopLanguage = Shops.findOne(shopId).language;
-  if (_.includes(supportedLanguages, shopLanguage)) {
+  if (supportedLanguages.includes(shopLanguage)) {
     return { default_language: shopLanguage };
   }
   return { default_language: "en" };
+}
+
+/**
+ * handleIndexUpdateFailures
+ * When using Collection.rawCollection() methods that return a Promise,
+ * handle the errors in a catch. However, ignore errors with altering indexes
+ * before a collection exists.
+ * @param  {Error} error an error object returned from a Promise rejection
+ * @return {undefined}   doesn't return anything
+ */
+function handleIndexUpdateFailures(error) {
+  // If we get an error from the Mongo driver because something tried to drop a
+  // collection before it existed, log it out as debug info.
+  // Otherwise, log whatever happened as an error.
+  if (error.name === "MongoError" && error.message === "ns not found") {
+    Logger.debug(error, "Attempted to set or remove indexes in a Mongo collection that doesn't exist yet");
+  } else {
+    Logger.error(error);
+  }
 }
 
 export function getSearchParameters(collection = "products") {
@@ -105,8 +123,8 @@ export function buildProductSearch(cb) {
   }
 
   const rawProductSearchCollection = ProductSearch.rawCollection();
-  rawProductSearchCollection.dropIndexes("*");
-  rawProductSearchCollection.createIndex(indexObject, weightObject, getSearchLanguage());
+  rawProductSearchCollection.dropIndexes().catch(handleIndexUpdateFailures);
+  rawProductSearchCollection.createIndex(indexObject, weightObject, getSearchLanguage()).catch(handleIndexUpdateFailures);
   if (cb) {
     cb();
   }
@@ -120,8 +138,8 @@ export function buildEmptyProductSearch() {
     indexObject[field] = "text";
   }
   const rawProductSearchCollection = ProductSearch.rawCollection();
-  rawProductSearchCollection.dropIndexes("*");
-  rawProductSearchCollection.createIndex(indexObject, weightObject, getSearchLanguage());
+  rawProductSearchCollection.dropIndexes().catch(handleIndexUpdateFailures);
+  rawProductSearchCollection.createIndex(indexObject, weightObject, getSearchLanguage()).catch(handleIndexUpdateFailures);
 }
 
 export function rebuildProductSearchIndex(cb) {
@@ -132,8 +150,8 @@ export function rebuildProductSearchIndex(cb) {
     indexObject[field] = "text";
   }
   const rawProductSearchCollection = ProductSearch.rawCollection();
-  rawProductSearchCollection.dropIndexes("*");
-  rawProductSearchCollection.createIndex(indexObject, weightObject, getSearchLanguage());
+  rawProductSearchCollection.dropIndexes().catch(handleIndexUpdateFailures);
+  rawProductSearchCollection.createIndex(indexObject, weightObject, getSearchLanguage()).catch(handleIndexUpdateFailures);
   if (cb) {
     cb();
   }
@@ -147,16 +165,22 @@ export function ensureProductSearchIndex() {
     indexObject[field] = "text";
   }
   const rawProductSearchCollection = ProductSearch.rawCollection();
-  rawProductSearchCollection.createIndex(indexObject, weightObject, getSearchLanguage());
+  rawProductSearchCollection.createIndex(indexObject, weightObject, getSearchLanguage()).catch(handleIndexUpdateFailures);
 }
 
 export function buildOrderSearchRecord(orderId) {
   const order = Orders.findOne(orderId);
   const user = Meteor.users.findOne(order.userId);
+  const anonymousUserEmail = order.email;
+
   const userEmails = [];
-  if (user) {
+  if (user && user.emails.length) {
     for (const email of user.emails) {
       userEmails.push(email.address);
+    }
+  } else {
+    if (anonymousUserEmail) {
+      userEmails.push(anonymousUserEmail);
     }
   }
   const orderSearch = {};
@@ -167,35 +191,56 @@ export function buildOrderSearchRecord(orderId) {
       orderSearch[field] = order[field];
     }
   }
-  orderSearch.billingName = order.billing[0].address.fullName;
-  orderSearch.billingPhone = _.replace(order.billing[0].address.phone, /\D/g, "");
-  orderSearch.shippingName = order.shipping[0].address.fullName;
-  orderSearch.shippingPhone = _.replace(order.shipping[0].address.phone, /\D/g, "");
+  // get the billing object for the current shop on the order (and not hardcoded [0])
+  const shopBilling = order.billing && order.billing.find(
+    billing => billing && billing.shopId === Reaction.getShopId()
+  ) || {};
+
+  // get the shipping object for the current shop on the order (and not hardcoded [0])
+  const shopShipping = order.shipping.find(
+    shipping => shipping.shopId === Reaction.getShopId()
+  ) || {};
+
+  orderSearch.billingName = shopBilling.address && shopBilling.address.fullName;
+  orderSearch.billingPhone = shopBilling.address && shopBilling.address.phone.replace(/\D/g, "");
+  orderSearch.shippingName = shopShipping.address && shopShipping.address.fullName;
+  if (shopShipping.address && shopShipping.address.phone) {
+    orderSearch.shippingPhone = shopShipping.address && shopShipping.address.phone.replace(/\D/g, "");
+  }
+
   orderSearch.billingAddress = {
-    address: order.billing[0].address.address1,
-    postal: order.billing[0].address.postal,
-    city: order.billing[0].address.city,
-    region: order.billing[0].address.region,
-    country: order.billing[0].address.country
+    address: shopBilling.address && shopBilling.address.address1,
+    postal: shopBilling.address && shopBilling.address.postal,
+    city: shopBilling.address && shopBilling.address.city,
+    region: shopBilling.address && shopBilling.address.region,
+    country: shopBilling.address && shopBilling.address.country
   };
   orderSearch.shippingAddress = {
-    address: order.shipping[0].address.address1,
-    postal: order.shipping[0].address.postal,
-    city: order.shipping[0].address.city,
-    region: order.shipping[0].address.region,
-    country: order.shipping[0].address.country
+    address: shopShipping.address && shopShipping.address.address1,
+    postal: shopShipping.address && shopShipping.address.postal,
+    city: shopShipping.address && shopShipping.address.city,
+    region: shopShipping.address && shopShipping.address.region,
+    country: shopShipping.address && shopShipping.address.country
   };
   orderSearch.userEmails = userEmails;
-  orderSearch.orderTotal = order.billing[0].invoice.total;
+  orderSearch.orderTotal = shopBilling.invoice && shopBilling.invoice.total;
   orderSearch.orderDate = moment(order.createdAt).format("YYYY/MM/DD");
-  orderSearch.billingStatus = order.billing[0].paymentMethod.status;
-  if (order.shipping[0].shipped) {
+  orderSearch.billingStatus = shopBilling.paymentMethod && shopBilling.paymentMethod.status;
+  orderSearch.billingCard = shopBilling.paymentMethod && shopBilling.paymentMethod.storedCard;
+  orderSearch.currentWorkflowStatus = order.workflow.status;
+  if (shopShipping.shipped) {
     orderSearch.shippingStatus = "Shipped";
-  } else if (order.shipping[0].packed) {
+  } else if (shopShipping.packed) {
     orderSearch.shippingStatus = "Packed";
   } else {
     orderSearch.shippingStatus = "New";
   }
+  orderSearch.product = {};
+  orderSearch.variants = {};
+  orderSearch.product.title = order.items.map(item => item.product && item.product.title);
+  orderSearch.variants.title = order.items.map(item => item.variants && item.variants.title);
+  orderSearch.variants.optionTitle = order.items.map(item => item.variants && item.variants.optionTitle);
+
   OrderSearch.insert(orderSearch);
 }
 
@@ -206,8 +251,8 @@ export function buildOrderSearch(cb) {
     buildOrderSearchRecord(order._id);
   }
   const rawOrderSearchCollection = OrderSearch.rawCollection();
-  rawOrderSearchCollection.dropIndexes("*");
-  rawOrderSearchCollection.createIndex({ shopId: 1, shippingName: 1, billingName: 1, userEmails: 1 });
+  rawOrderSearchCollection.dropIndexes().catch(handleIndexUpdateFailures);
+  rawOrderSearchCollection.createIndex({ shopId: 1, shippingName: 1, billingName: 1, userEmails: 1 }).catch(handleIndexUpdateFailures);
   if (cb) {
     cb();
   }
@@ -222,8 +267,8 @@ export function buildAccountSearch(cb) {
     buildAccountSearchRecord(account._id);
   }
   const rawAccountSearchCollection = AccountSearch.rawCollection();
-  rawAccountSearchCollection.dropIndexes("*");
-  rawAccountSearchCollection.createIndex({ shopId: 1, emails: 1 });
+  rawAccountSearchCollection.dropIndexes().catch(handleIndexUpdateFailures);
+  rawAccountSearchCollection.createIndex({ shopId: 1, emails: 1 }).catch(handleIndexUpdateFailures);
   if (cb) {
     cb();
   }
@@ -245,6 +290,6 @@ export function buildAccountSearchRecord(accountId) {
     }
     AccountSearch.insert(accountSearch);
     const rawAccountSearchCollection = AccountSearch.rawCollection();
-    rawAccountSearchCollection.createIndex({ shopId: 1, emails: 1 });
+    rawAccountSearchCollection.createIndex({ shopId: 1, emails: 1 }).catch(handleIndexUpdateFailures);
   }
 }

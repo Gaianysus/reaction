@@ -62,7 +62,7 @@ AutoForm.addHooks("example-payment-form", {
       shopId: Reaction.getShopId()
     });
     Example.authorize(form, {
-      total: Cart.findOne().cartTotal(),
+      total: Cart.findOne().getTotal(),
       currency: Shops.findOne().currency
     }, function (error, transaction) {
       submitting = false;
@@ -80,6 +80,7 @@ AutoForm.addHooks("example-payment-form", {
             storedCard: storedCard,
             method: "credit",
             transactionId: transaction.transactionId,
+            riskLevel: transaction.riskLevel,
             currency: transaction.currency,
             amount: transaction.amount,
             status: transaction.status,

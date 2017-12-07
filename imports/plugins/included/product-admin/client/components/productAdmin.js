@@ -105,9 +105,10 @@ class ProductAdmin extends Component {
     }
   }
 
-  handleCardExpand(cardName) {
+
+  handleCardExpand = (event, card, cardName, isExpanded) => {
     if (this.props.onCardExpand) {
-      this.props.onCardExpand(cardName);
+      this.props.onCardExpand(isExpanded ? cardName : undefined);
     }
   }
 
@@ -154,7 +155,16 @@ class ProductAdmin extends Component {
 
   handleMetaChange = (event, metafield, index) => {
     if (this.props.onMetaChange) {
-      this.props.onMetaChange(metafield, index);
+      if (index >= 0) {
+        const { product } = this.state;
+        product.metafields[index] = metafield;
+
+        this.setState({
+          product
+        });
+      } else {
+        this.props.onMetaChange(metafield);
+      }
     }
   }
 
@@ -204,12 +214,8 @@ class ProductAdmin extends Component {
     );
   }
 
-  isExpanded(groupName) {
-    if (this.state.expandedCard && this.state.expandedCard === groupName) {
-      return true;
-    }
-
-    return false;
+  isExpanded = (groupName) => {
+    return this.state.expandedCard === groupName;
   }
 
   render() {
@@ -217,7 +223,8 @@ class ProductAdmin extends Component {
       <Components.CardGroup>
         <Components.Card
           expanded={this.isExpanded("productDetails")}
-          onExpand={this.handleCardExpand.bind(this, "productDetails")}
+          name={"productDetails"}
+          onExpand={this.handleCardExpand}
         >
           <Components.CardHeader
             actAsExpander={true}
@@ -314,7 +321,8 @@ class ProductAdmin extends Component {
         </Components.Card>
         <Components.Card
           expanded={this.isExpanded("social")}
-          onExpand={this.handleCardExpand.bind(this, "social")}
+          name={"social"}
+          onExpand={this.handleCardExpand}
         >
           <Components.CardHeader
             actAsExpander={true}
@@ -324,6 +332,7 @@ class ProductAdmin extends Component {
           <Components.CardBody expandable={true}>
             <Components.TextField
               i18nKeyLabel="productDetailEdit.facebookMsg"
+              i18nKeyPlaceholder="productDetailEdit.facebookMsg"
               label="Facebook Message"
               multiline={true}
               name="facebookMsg"
@@ -334,6 +343,7 @@ class ProductAdmin extends Component {
             />
             <Components.TextField
               i18nKeyLabel="productDetailEdit.twitterMsg"
+              i18nKeyPlaceholder="productDetailEdit.twitterMsg"
               label="Twitter Message"
               multiline={true}
               name="twitterMsg"
@@ -344,6 +354,7 @@ class ProductAdmin extends Component {
             />
             <Components.TextField
               i18nKeyLabel="productDetailEdit.pinterestMsg"
+              i18nKeyPlaceholder="productDetailEdit.pinterestMsg"
               label="Pinterest Message"
               multiline={true}
               name="pinterestMsg"
@@ -354,6 +365,7 @@ class ProductAdmin extends Component {
             />
             <Components.TextField
               i18nKeyLabel="productDetailEdit.googleplusMsg"
+              i18nKeyPlaceholder="productDetailEdit.googleplusMsg"
               label="Google+ Message"
               multiline={true}
               name="googleplusMsg"
@@ -367,7 +379,8 @@ class ProductAdmin extends Component {
 
         <Components.Card
           expanded={this.isExpanded("hashtags")}
-          onExpand={this.handleCardExpand.bind(this, "hashtags")}
+          name={"hashtags"}
+          onExpand={this.handleCardExpand}
         >
           <Components.CardHeader
             actAsExpander={true}
@@ -376,6 +389,7 @@ class ProductAdmin extends Component {
           />
           <Components.CardBody expandable={true}>
             <Components.TagList
+              editable={this.props.editable}
               enableNewTagForm={true}
               product={this.product}
               tagProps={{
@@ -387,7 +401,8 @@ class ProductAdmin extends Component {
 
         <Components.Card
           expanded={this.isExpanded("metafields")}
-          onExpand={this.handleCardExpand.bind(this, "metafields")}
+          name={"metafields"}
+          onExpand={this.handleCardExpand}
         >
           <Components.CardHeader
             actAsExpander={true}
@@ -412,6 +427,7 @@ class ProductAdmin extends Component {
 ProductAdmin.propTypes = {
   countries: PropTypes.arrayOf(PropTypes.object),
   editFocus: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
+  editable: PropTypes.bool,
   handleFieldBlur: PropTypes.func,
   handleFieldChange: PropTypes.func,
   handleProductFieldChange: PropTypes.func,

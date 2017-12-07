@@ -1,49 +1,57 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import { Orders } from "/lib/collections";
-import { SortableTable, Loading, Checkbox } from "@reactioncommerce/reaction-ui";
-import OrderTableColumn from "./orderTableColumn";
-
-import classnames from "classnames/dedupe";
 import Avatar from "react-avatar";
 import moment from "moment";
+import classnames from "classnames/dedupe";
+import { i18next } from "/client/api";
+import { Orders } from "/lib/collections";
+import { Badge, ClickToCopy, Icon, Translation, Checkbox, Loading, SortableTable } from "@reactioncommerce/reaction-ui";
+import OrderTableColumn from "./orderTableColumn";
+import OrderBulkActionsBar from "./orderBulkActionsBar";
 import { formatPriceString } from "/client/api";
-import { Badge, ClickToCopy, Icon, Translation, Button } from "@reactioncommerce/reaction-ui";
 import ProductImage from "./productImage";
+import { getOrderRiskBadge, getOrderRiskStatus, getBillingInfo, getShippingInfo } from "../helpers";
 
 const classNames = {
   colClassNames: {
-    "Name": "order-table-column-name",
-    "Email": "order-table-column-email hidden-xs hidden-sm",
-    "Date": "order-table-column-date hidden-xs hidden-sm",
-    "ID": "order-table-column-id hidden-xs",
-    "Total": "order-table-column-total hidden-xs",
-    "Shipping": "order-table-column-shipping hidden-xs hidden-sm",
-    "Status": "order-table-column-status",
-    "": "order-table-column-control"
+    name: "order-table-column-name",
+    email: "order-table-column-email",
+    date: "order-table-column-date hidden-xs hidden-sm",
+    id: "order-table-column-id hidden-xs hidden-sm",
+    total: "order-table-column-total",
+    shipping: "order-table-column-shipping hidden-xs hidden-sm",
+    status: "order-table-column-status",
+    control: "order-table-column-control"
   },
   headerClassNames: {
-    "Name": "order-table-header-name",
-    "Email": "order-table-header-email hidden-xs hidden-sm",
-    "Date": "order-table-header-date hidden-xs hidden-sm",
-    "ID": "order-table-header-id hidden-xs",
-    "Total": "order-table-header-total hidden-xs",
-    "Shipping": "order-table-header-shipping hidden-xs hidden-sm",
-    "Status": "order-table-header-status",
-    "": "order-table-header-control"
+    name: "order-table-header-name",
+    email: "order-table-header-email",
+    date: "order-table-header-date hidden-xs hidden-sm",
+    id: "order-table-header-id hidden-xs hidden-sm",
+    total: "order-table-header-total",
+    shipping: "order-table-header-shipping hidden-xs hidden-sm",
+    status: "order-table-header-status",
+    control: "order-table-header-control"
   }
 };
 
 class OrderTable extends Component {
   static propTypes = {
     displayMedia: PropTypes.func,
+    handleBulkPaymentCapture: PropTypes.func,
     handleClick: PropTypes.func,
     handleSelect: PropTypes.func,
+    isLoading: PropTypes.object,
     isOpen: PropTypes.bool,
     multipleSelect: PropTypes.bool,
     orders: PropTypes.array,
+    query: PropTypes.object,
+    renderFlowList: PropTypes.bool,
     selectAllOrders: PropTypes.func,
-    selectedItems: PropTypes.array
+    selectedItems: PropTypes.array,
+    setShippingStatus: PropTypes.func,
+    shipping: PropTypes.object,
+    toggleShippingFlowList: PropTypes.func
   }
 
   /**
@@ -67,15 +75,6 @@ class OrderTable extends Component {
     return "default";
   }
 
-  /**
-   * Shipping Badge
-   * TODO: any logic here, we don't have shipping status changes at the moment
-   * @return {string} A string containing the type of Badge
-   */
-  shippingBadgeStatus() {
-    return "basic";
-  }
-
   renderOrderButton(order) {
     const startWorkflow = order.workflow.status === "new";
     const classes = classnames({
@@ -83,16 +82,18 @@ class OrderTable extends Component {
       "btn": true,
       "btn-success": startWorkflow
     });
+    const chevronDirection = i18next.dir() === "rtl" ? "left" : "right";
 
     return (
       <button className={classes} onClick={() => this.props.handleClick(order, startWorkflow)}>
-        <Icon icon="fa fa-chevron-right" />
+        <Icon icon={`fa fa-chevron-${chevronDirection}`} />
       </button>
     );
   }
 
   renderOrderInfo(order) {
     const { displayMedia } = this.props;
+    const invoice = getBillingInfo(order).invoice || {};
 
     return (
       <div className="order-info">
@@ -113,7 +114,7 @@ class OrderTable extends Component {
           </span>
 
           <span className="order-data order-data-total">
-            <strong>Total: {formatPriceString(order.billing[0].invoice.total)}</strong>
+            <strong>Total: {formatPriceString(invoice.total)}</strong>
           </span>
         </div>
 
@@ -138,25 +139,36 @@ class OrderTable extends Component {
   }
 
   renderShipmentInfo(order) {
-    const emailAddress = order.email || <Translation defaultValue={"Email not availabe"} i18nKey={"admin.orderWorkflow.ordersList.emailNotFound"} />;
+    const emailAddress = order.email ||
+    <Translation defaultValue={"Email not available"} i18nKey={"admin.orderWorkflow.ordersList.emailNotFound"} />;
+    const shipping = getShippingInfo(order);
+    const orderRisk = getOrderRiskStatus(order);
+
     return (
       <div className="shipment-info">
         <div className="customer-info">
           <Avatar
             email={order.email}
             round={true}
-            name={order.shipping[0].address.fullName}
+            name={shipping.address && shipping.address.fullName}
             size={30}
             className="rui-order-avatar"
           />
-          <strong>{order.shipping[0].address.fullName}</strong> | {emailAddress}
+          <strong>{shipping.address && shipping.address.fullName}</strong> | {emailAddress}
+          {orderRisk &&
+            <Badge
+              className="risk-info"
+              i18nKeyLabel={`admin.orderRisk.${orderRisk}`}
+              status={getOrderRiskBadge(orderRisk)}
+            />
+          }
         </div>
         <div className="workflow-info">
           <Badge
             badgeSize="large"
-            i18nKeyLabel={`cartDrawer.${order.shipping[0].workflow.status}`}
-            label={order.shipping[0].workflow.status}
-            status={this.shippingBadgeStatus(order)}
+            i18nKeyLabel={`cartDrawer.${shipping.workflow && shipping.workflow.status}`}
+            label={shipping.workflow && shipping.workflow.status}
+            status="basic"
           />
           <Badge
             badgeSize="large"
@@ -189,44 +201,6 @@ class OrderTable extends Component {
     );
   }
 
-  renderBulkOrderActionsBar = () => {
-    const { orders, multipleSelect, selectedItems, selectAllOrders } = this.props;
-
-    if (selectedItems.length > 0) {
-      return (
-        <div className="bulk-order-actions-bar">
-          <Checkbox
-            className="checkbox-large orders-checkbox"
-            checked={selectedItems.length === orders.length || multipleSelect}
-            name="orders-checkbox"
-            onChange={() => selectAllOrders(orders, (selectedItems.length === orders.length || multipleSelect))}
-          />
-          <Translation
-            className="selected-orders"
-            defaultValue={`${selectedItems.length} Selected`}
-            i18nKey={`${selectedItems.length} order.selected`}
-          />
-          <Button
-            status="success"
-            bezelStyle="solid"
-            className="capture-orders-button"
-            label="Capture"
-            i18nKeyLabel="order.capture"
-          />
-          <Button
-            status="default"
-            bezelStyle="solid"
-            className="bulk-actions-button"
-            label="Bulk Actions"
-            i18nKeyLabel="order.bulkActions"
-            icon="fa fa-chevron-down"
-            iconAfter={true}
-          />
-        </div>
-      );
-    }
-  }
-
   render() {
     let getTrProps = undefined;
     let getTheadProps = undefined;
@@ -238,14 +212,38 @@ class OrderTable extends Component {
     if (this.props.isOpen) {
       // Render order list column/row data
       const filteredFields = {
-        "Name": "shipping[0].address.fullName",
-        "Email": "email",
-        "Date": "createdAt",
-        "ID": "_id",
-        "Total": "billing[0].invoice.total",
-        "Shipping": "shipping[0].workflow.status",
-        "Status": "workflow.status",
-        "": ""
+        name: {
+          accessor: row => getShippingInfo(row).address && getShippingInfo(row).address.fullName,
+          id: "shippingFullName"
+        },
+        email: {
+          accessor: "email",
+          id: "email"
+        },
+        date: {
+          accessor: "createdAt",
+          id: "createdAt"
+        },
+        id: {
+          accessor: "_id",
+          id: "_id"
+        },
+        total: {
+          accessor: row => getBillingInfo(row).invoice && getBillingInfo(row).invoice.total,
+          id: "billingTotal"
+        },
+        shipping: {
+          accessor: row => getShippingInfo(row).workflow && getShippingInfo(row).workflow.status,
+          id: "shippingStatus"
+        },
+        status: {
+          accessor: "workflow.status",
+          id: "workflow.status"
+        },
+        control: {
+          accessor: "",
+          id: ""
+        }
       };
 
       const columnNames = Object.keys(filteredFields);
@@ -273,9 +271,10 @@ class OrderTable extends Component {
         let colHeader = undefined;
         let resizable = true;
         let sortable = true;
+        let columnNameLabel;
 
         // Add custom styles for the column name `name`
-        if (columnName === "Name") {
+        if (columnName === "name") {
           colHeader = () => (
             <div className="order-table-name-cell">
               <Checkbox
@@ -284,19 +283,27 @@ class OrderTable extends Component {
                 name="orders-checkbox"
                 onChange={() => this.props.selectAllOrders(this.props.orders, this.props.multipleSelect)}
               />
-              <span style={{ marginTop: 10 }}>{columnName}</span>
+              <span style={{ marginTop: 10 }}>
+                <Translation
+                  defaultValue="Name"
+                  i18nKey="admin.table.headers.name"
+                />
+              </span>
             </div>
           );
-        }
-
-        if (columnName === "") {
+        } else if (columnName === "control") {
+          colHeader = " ";
           resizable = false;
           sortable = false;
+        } else {
+          columnNameLabel = i18next.t(`admin.table.headers.${columnName}`);
         }
 
+
         const columnMeta = {
-          accessor: filteredFields[columnName],
-          Header: colHeader ? colHeader : columnName,
+          accessor: filteredFields[columnName].accessor,
+          id: filteredFields[columnName].id,
+          Header: colHeader ? colHeader : columnNameLabel,
           headerClassName: classNames.headerClassNames[columnName],
           className: classNames.colClassNames[columnName],
           resizable: resizable,
@@ -308,14 +315,13 @@ class OrderTable extends Component {
               handleSelect={this.props.handleSelect}
               selectedItems={this.props.selectedItems}
               fulfillmentBadgeStatus={this.fulfillmentBadgeStatus}
-              shippingBadgeStatus={this.shippingBadgeStatus}
             />
           )
         };
         customColumnMetadata.push(columnMeta);
       });
     } else {
-      // Render order detail column/row dat
+      // Render order detail column/row data
 
       const columnMeta = {
         Cell: row => (<div>{this.renderOrderCard(row.original)}</div>)
@@ -349,16 +355,29 @@ class OrderTable extends Component {
     }
 
     return (
-      <div>
-        {this.props.isOpen && this.renderBulkOrderActionsBar()}
+      <div className="order-details-table">
+        {this.props.isOpen &&
+          <OrderBulkActionsBar
+            shipping={this.props.shipping}
+            multipleSelect={this.props.multipleSelect}
+            orders={this.props.orders}
+            selectAllOrders={this.props.selectAllOrders}
+            selectedItems={this.props.selectedItems}
+            setShippingStatus={this.props.setShippingStatus}
+            isLoading={this.props.isLoading}
+            renderFlowList={this.props.renderFlowList}
+            toggleShippingFlowList={this.props.toggleShippingFlowList}
+            handleBulkPaymentCapture={this.props.handleBulkPaymentCapture}
+          />
+        }
         <SortableTable
           tableClassName={`rui order table -highlight ${this.props.selectedItems.length > 0 ?
             "table-header-hidden" :
             "table-header-visible"}`
           }
-          publication="CustomPaginatedOrders"
           collection={Orders}
-          matchingResultsCount="order-count"
+          data={this.props.orders}
+          query={this.props.query}
           columnMetadata={customColumnMetadata}
           externalLoadingComponent={Loading}
           filterType="none"
@@ -368,13 +387,11 @@ class OrderTable extends Component {
           getTrGroupProps={getTrGroupProps}
           getPaginationProps={() => {
             return {
-              className: this.props.isOpen && this.props.selectedItems.length > 0 ?
-                "order-table-pagination-hidden" :
-                "order-table-pagination-visible"
+              className: "order-table-pagination-visible"
             };
           }}
           getTableProps={getTableProps}
-          showPaginationTop={true}
+          showPaginationTop={this.props.selectedItems.length ? false : true}
         />
       </div>
     );

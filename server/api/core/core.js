@@ -8,17 +8,23 @@ import { Random } from "meteor/random";
 import { Accounts } from "meteor/accounts-base";
 import { Roles } from "meteor/alanning:roles";
 import { EJSON } from "meteor/ejson";
-import { Jobs, Packages, Shops, Groups } from "/lib/collections";
+import * as Collections from "/lib/collections";
 import { Hooks, Logger } from "/server/api";
 import ProcessJobs from "/server/jobs";
 import { registerTemplate } from "./templates";
 import { sendVerificationEmail } from "./accounts";
 import { getMailUrl } from "./email/config";
+import { createGroups } from "./groups";
 
+// Unpack the named Collections we use.
+const { Jobs, Packages, Shops } = Collections;
 
 export default {
 
   init() {
+    // run beforeCoreInit hooks
+    Hooks.Events.run("beforeCoreInit");
+
     // make sure the default shop has been created before going further
     while (!this.getShopId()) {
       Logger.warn("No shopId, waiting one second...");
@@ -37,10 +43,11 @@ export default {
     if (process.env.VERBOSE_JOBS) {
       Jobs.setLogStream(process.stdout);
     }
+
     this.loadPackages();
     // process imports from packages and any hooked imports
     this.Import.flush();
-    this.createDefaultGroups();
+    this.createGroups();
     // timing is important, packages are rqd for initial permissions configuration.
     if (!Meteor.isAppTest) {
       this.createDefaultAdminUser();
@@ -60,43 +67,34 @@ export default {
     const registeredPackage = this.Packages[packageInfo.name] = packageInfo;
     return registeredPackage;
   },
-  createDefaultGroups(options = {}) {
-    const { shopId } = options;
-    const allGroups = Groups.find({}).fetch();
-    const query = {};
+  defaultCustomerRoles: [ "guest", "account/profile", "product", "tag", "index", "cart/checkout", "cart/completed"],
+  defaultVisitorRoles: ["anonymous", "guest", "product", "tag", "index", "cart/checkout", "cart/completed"],
+  createGroups,
+  /**
+   * canInviteToGroup
+   * @summary checks if the user making the request is allowed to make invitation to that group
+   * @param {Object} options -
+   * @param {Object} options.group - group to invite to
+   * @param {Object} options.user - user object  making the invite (Meteor.user())
+   * @return {Boolean} -
+   */
+  canInviteToGroup(options) {
+    const { group } = options;
+    let { user } = options;
+    if (!user) {
+      user = Meteor.user();
+    }
+    const userPermissions = user.roles[group.shopId];
+    const groupPermissions = group.permissions;
 
-    if (shopId) {
-      query._id = shopId;
+    // granting invitation right for user with `owner` role in a shop
+    if (this.hasPermission(["owner"], Meteor.userId(), group.shopId)) {
+      return true;
     }
 
-    const shops = Shops.find(query).fetch();
-    const ownerRoles = Roles.getAllRoles().fetch().map(role => role.name);
-    const shopManagerRoles = ownerRoles.filter(role => role !== "owner");
-
-    const roles = {
-      "shop manager": shopManagerRoles,
-      "customer": [ "guest", "account/profile", "product", "tag", "index", "cart/checkout", "cart/completed"],
-      "guest": ["anonymous", "guest", "product", "tag", "index", "cart/checkout", "cart/completed"],
-      "owner": ownerRoles
-    };
-
-    if (shops && shops.length) {
-      shops.forEach(shop => createGroupsForShop(shop));
-    }
-    function createGroupsForShop(shop) {
-      Object.keys(roles).forEach(groupKeys => {
-        const groupExists = allGroups.find(grp => grp.slug === groupKeys && grp.shopId === shop._id);
-        if (!groupExists) { // create group only if it doesn't exist before
-          Logger.debug(`creating group ${groupKeys} for shop ${shop.name}`);
-          Groups.insert({
-            name: groupKeys,
-            slug: groupKeys,
-            permissions: roles[groupKeys],
-            shopId: shop._id
-          });
-        }
-      });
-    }
+    // checks that userPermissions includes all elements from groupPermissions
+    // we are not using Reaction.hasPermission here because it returns true if the user has at least one
+    return _.difference(groupPermissions, userPermissions).length === 0;
   },
   /**
    * registerTemplate
@@ -117,7 +115,6 @@ export default {
   hasPermission(checkPermissions, userId = Meteor.userId(), checkGroup = this.getShopId()) {
     // check(checkPermissions, Match.OneOf(String, Array)); check(userId, String); check(checkGroup,
     // Match.Optional(String));
-
     let permissions;
     // default group to the shop or global if shop isn't defined for some reason.
     let group;
@@ -141,27 +138,7 @@ export default {
     permissions = _.uniq(permissions);
 
     // return if user has permissions in the group
-    if (Roles.userIsInRole(userId, permissions, group)) {
-      return true;
-    }
-
-    // global roles check
-    const sellerShopPermissions = Roles.getGroupsForUser(userId, "admin");
-
-    // we're looking for seller permissions.
-    if (sellerShopPermissions) {
-      // loop through shops roles and check permissions
-      for (const key in sellerShopPermissions) {
-        if (key) {
-          const shop = sellerShopPermissions[key];
-          if (Roles.userIsInRole(userId, permissions, shop)) {
-            return true;
-          }
-        }
-      }
-    }
-    // no specific permissions found returning false
-    return false;
+    return Roles.userIsInRole(userId, permissions, group);
   },
 
   hasOwnerAccess() {
@@ -174,6 +151,34 @@ export default {
 
   hasDashboardAccess() {
     return this.hasPermission(["owner", "admin", "dashboard"]);
+  },
+
+  /**
+   * Finds all shops that a user has a given set of roles for
+   * @method getShopsWithRoles
+   * @param  {array} roles an array of roles to check. Will return a shopId if the user has _any_ of the roles
+   * @param  {string} [userId=Meteor.userId()] Optional userId, defaults to Meteor.userId()
+   *                                           Must pass this.userId from publications to avoid error!
+   * @return {array} Array of shopIds that the user has at least one of the given set of roles for
+   */
+  getShopsWithRoles(roles, userId = Meteor.userId()) {
+    // Owner permission for a shop superceeds grantable permissions, so we always check for owner permissions as well
+    roles.push("owner");
+
+    // Reducer that returns a unique list of shopIds that results from calling getGroupsForUser for each role
+    return roles.reduce((shopIds, role) => {
+      // getGroupsForUser will return a list of shops for which this user has the supplied role for
+      const shopIdsUserHasRoleFor = Roles.getGroupsForUser(userId, role);
+
+      // If we have new shopIds found, add them to the list
+      if (Array.isArray(shopIdsUserHasRoleFor) && shopIdsUserHasRoleFor.length > 0) {
+        // Create unique array from existing shopIds array and the shops
+        return [...new Set([...shopIds, ...shopIdsUserHasRoleFor])];
+      }
+
+      // IF we don't have any shopIds returned, keep our existing list
+      return shopIds;
+    }, []);
   },
 
   getSellerShopId() {
@@ -380,6 +385,17 @@ export default {
   },
 
   /**
+   * Takes options in the form of a query object. Returns a package that matches.
+   * @method getPackageSettingsWithOptions
+   * @param  {object} options Options object, forms the query for Packages.findOne
+   * @return {object} Returns the first package found with the provided options
+   */
+  getPackageSettingsWithOptions(options) {
+    const query = options;
+    return Packages.findOne(query);
+  },
+
+  /**
    * getMarketplaceSettings finds the enabled `reaction-marketplace` package for
    * the primary shop and returns the settings
    * @method getMarketplaceSettings
@@ -475,6 +491,11 @@ export default {
         if (enabledPackages && Array.isArray(enabledPackages)) {
           if (enabledPackages.indexOf(pkg.name) === -1) {
             pkg.enabled = false;
+          } else {
+            // Enable "soft switch" for package.
+            if (pkg.settings && pkg.settings[packageName]) {
+              pkg.settings[packageName].enabled = true;
+            }
           }
         }
         Packages.insert(pkg);
@@ -614,14 +635,17 @@ export default {
       sendVerificationEmail(accountId);
     }
 
-    //
-    // Set Default Roles
-    //
+    // Set default owner roles
     const defaultAdminRoles = ["owner", "admin", "guest", "account/profile"];
+    // Join other roles with defaultAdminRoles for owner.
+    // this is needed as owner should not just have "owner" but all other defined roles
+    let ownerRoles = defaultAdminRoles.concat(this.defaultCustomerRoles);
+    ownerRoles = _.uniq(ownerRoles);
+
     // we don't use accounts/addUserPermissions here because we may not yet have permissions
-    Roles.setUserRoles(accountId, defaultAdminRoles, shopId);
+    Roles.setUserRoles(accountId, ownerRoles, shopId);
     // // the reaction owner has permissions to all sites by default
-    Roles.setUserRoles(accountId, defaultAdminRoles, Roles.GLOBAL_GROUP);
+    Roles.setUserRoles(accountId, ownerRoles, Roles.GLOBAL_GROUP);
     // initialize package permissions we don't need to do any further permission configuration it is taken care of in the
     // assignOwnerRoles
     const packages = Packages.find().fetch();
@@ -718,6 +742,18 @@ export default {
 
         const combinedSettings = merge({}, settingsFromPackage, settingsFromFixture || {}, settingsFromDB || {});
 
+        if (combinedSettings.registry) {
+          combinedSettings.registry = combinedSettings.registry.map((entry) => {
+            if (entry.provides && !Array.isArray(entry.provides)) {
+              entry.provides = [entry.provides];
+              Logger.warn(`Plugin ${combinedSettings.name} is using a deprecated version of the provides property for` +
+                          ` the ${entry.name || entry.route} registry entry. Since v1.5.0 registry provides accepts` +
+                          " an array of strings.");
+            }
+            return entry;
+          });
+        }
+
         // populate array of layouts that don't already exist in Shops
         if (combinedSettings.layout) {
           // filter out layout Templates
@@ -758,5 +794,53 @@ export default {
     const version = packageJson.version;
     Logger.info(`Reaction Version: ${version}`);
     Shops.update({}, { $set: { appVersion: version } }, { multi: true });
+  },
+
+  // TODO: Remove collectionSchema method in favor of simpl-schema
+  /**
+   * Method for getting all schemas attached to a given collection
+   * @deprecated by simpl-schema
+   * @private
+   * @method collectionSchema
+   * @param  {string} collection The mongo collection to get schemas for
+   * @param  {Object} [selector] Optional selector for multi schema collections
+   * @return {Object} Returns a simpleSchema that is a combination of all schemas
+   *                  that have been attached to the collection or false if
+   *                  the collection or schema could not be found
+   */
+  collectionSchema(collection, selector) {
+    let selectorErrMsg = "";
+    if (selector) {
+      selectorErrMsg = `and selector ${selector}`;
+    }
+    const errMsg = `Reaction.collectionSchema could not find schemas for ${collection} collection ${selectorErrMsg}`;
+
+    if (!Collections[collection] || !Collections[collection]._c2) {
+      Logger.warn(errMsg);
+      // Return false so we don't pass a check that uses a non-existant schema
+      return false;
+    }
+
+    const c2 = Collections[collection]._c2;
+
+    // if we have `_simpleSchemas` (plural), then this is a selector based schema
+    if (c2._simpleSchemas) {
+      const selectorKeys = Object.keys(selector);
+      const selectorSchema = c2._simpleSchemas.find((schema) => {
+        // Make sure that every key:value in our selector matches the key:value in the schema selector
+        return selectorKeys.every((key) => selector[key] === schema.selector[key]);
+      });
+
+      if (!selectorSchema) {
+        Logger.warn(errMsg);
+        // Return false so we don't pass a check that uses a non-existant schema
+        return false;
+      }
+
+      // return a copy of the selector schema we found
+      return selectorSchema.schema;
+    }
+
+    return c2._simpleSchema;
   }
 };

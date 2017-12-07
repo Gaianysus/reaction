@@ -126,12 +126,14 @@ const wrapComponent = (Comp) => (
     }
 
     additionalProductMedia = () => {
+      const variants = ReactionProduct.getVariants(this.props.product._id);
+      const variantIds = variants.map(variant => variant._id);
       const mediaArray = Media.find({
         "metadata.productId": this.props.product._id,
-        "metadata.priority": {
-          $gt: 0
+        "metadata.variantId": {
+          $in: variantIds
         },
-        "metadata.toGrid": 1
+        "metadata.workflow": { $nin: ["archived", "unpublished"] }
       }, { limit: 3 });
 
       return mediaArray.count() > 1 ? mediaArray : false;
@@ -170,8 +172,10 @@ const wrapComponent = (Comp) => (
           }
         }
       } else {
-        checkbox.checked = !checkbox.checked;
-        this.props.itemSelectHandler(checkbox.checked, product._id);
+        if (checkbox) {
+          checkbox.checked = !checkbox.checked;
+          this.props.itemSelectHandler(checkbox.checked, product._id);
+        }
       }
     }
 
@@ -182,6 +186,9 @@ const wrapComponent = (Comp) => (
       Reaction.Router.go("product", {
         handle: handle
       });
+
+      // Open actionView to productDetails panel
+      Reaction.state.set("edit/focus", "productDetails");
 
       Reaction.setActionView({
         i18nKeyLabel: "productDetailEdit.productSettings",
@@ -228,8 +235,10 @@ const wrapComponent = (Comp) => (
           } else {
             const checkbox = list.querySelector(`input[type=checkbox][value="${product._id}"]`);
             Session.set("productGrid/selectedProducts", []);
-            checkbox.checked = true;
-            this.props.itemSelectHandler(checkbox.checked, product._id);
+            if (checkbox) {
+              checkbox.checked = true;
+              this.props.itemSelectHandler(checkbox.checked, product._id);
+            }
           }
         }
       } else {
