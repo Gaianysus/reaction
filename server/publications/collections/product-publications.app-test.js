@@ -3,7 +3,7 @@ import { Random } from "meteor/random";
 import { expect } from "meteor/practicalmeteor:chai";
 import { sinon } from "meteor/practicalmeteor:sinon";
 import { Roles } from "meteor/alanning:roles";
-import { getShop } from "/server/imports/fixtures/shops";
+import { createActiveShop } from "/server/imports/fixtures/shops";
 import { Reaction } from "/server/api";
 import * as Collections from "/lib/collections";
 import Fixtures from "/server/imports/fixtures";
@@ -13,10 +13,12 @@ import { RevisionApi } from "/imports/plugins/core/revisions/lib/api/revisions";
 Fixtures();
 
 describe("Publication", function () {
-  const shop = getShop();
+  const shopId = Random.id();
   let sandbox;
 
   beforeEach(function () {
+    Collections.Shops.remove({});
+    createActiveShop({ _id: shopId });
     sandbox = sinon.sandbox.create();
     sandbox.stub(RevisionApi, "isRevisionControlEnabled", () => true);
   });
@@ -38,14 +40,14 @@ describe("Publication", function () {
       max: 19.99
     };
 
-    before(function () {
+    beforeEach(function () {
       Collections.Products.direct.remove({});
 
       // a product with price range A, and not visible
       Collections.Products.insert({
         ancestors: [],
         title: "My Little Pony",
-        shopId: shop._id,
+        shopId: shopId,
         type: "simple",
         price: priceRangeA,
         isVisible: false,
@@ -57,7 +59,7 @@ describe("Publication", function () {
       Collections.Products.insert({
         ancestors: [],
         title: "Shopkins - Peachy",
-        shopId: shop._id,
+        shopId: shopId,
         price: priceRangeB,
         type: "simple",
         isVisible: true,
@@ -69,7 +71,7 @@ describe("Publication", function () {
       Collections.Products.insert({
         ancestors: [],
         title: "Fresh Tomatoes",
-        shopId: shop._id,
+        shopId: shopId,
         price: priceRangeA,
         type: "simple",
         isVisible: true,
@@ -82,8 +84,10 @@ describe("Publication", function () {
     describe("Products", function () {
       it("should return all products to admins", function (done) {
         // setup
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => true);
+        sandbox.stub(Reaction, "hasPermission", () => true);
+        sandbox.stub(Reaction, "getShopsWithRoles", () =>  [shopId]);
 
         const collector = new PublicationCollector({ userId: Random.id() });
         let isDone = false;
@@ -101,8 +105,10 @@ describe("Publication", function () {
 
       it("should have an expected product title", function (done) {
         // setup
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => true);
+        sandbox.stub(Reaction, "hasPermission", () => true);
+        sandbox.stub(Reaction, "getShopsWithRoles", () =>  [shopId]);
 
         const collector = new PublicationCollector({ userId: Random.id() });
         let isDone = false;
@@ -122,7 +128,7 @@ describe("Publication", function () {
       });
 
       it("should return only visible products to visitors", function (done) {
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => false);
 
         const collector = new PublicationCollector({ userId: Random.id() });
@@ -146,7 +152,7 @@ describe("Publication", function () {
       it("should return only products matching query", function (done) {
         const productScrollLimit = 24;
         const filters = { query: "Shopkins" };
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => false);
 
         const collector = new PublicationCollector({ userId: Random.id() });
@@ -164,7 +170,7 @@ describe("Publication", function () {
       it("should not return products not matching query", function (done) {
         const productScrollLimit = 24;
         const filters = { query: "random search" };
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => false);
 
         const collector = new PublicationCollector({ userId: Random.id() });
@@ -181,7 +187,7 @@ describe("Publication", function () {
       it("should return products in price.min query", function (done) {
         const productScrollLimit = 24;
         const filters = { "price.min": "2.00" };
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => false);
 
         const collector = new PublicationCollector({ userId: Random.id() });
@@ -198,7 +204,7 @@ describe("Publication", function () {
       it("should return products in price.max query", function (done) {
         const productScrollLimit = 24;
         const filters = { "price.max": "24.00" };
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => false);
 
         const collector = new PublicationCollector({ userId: Random.id() });
@@ -215,7 +221,7 @@ describe("Publication", function () {
       it("should return products in price.min - price.max range query", function (done) {
         const productScrollLimit = 24;
         const filters = { "price.min": "12.00", "price.max": "19.98" };
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => false);
 
         const collector = new PublicationCollector({ userId: Random.id() });
@@ -232,7 +238,7 @@ describe("Publication", function () {
       it("should return products where value is in price set query", function (done) {
         const productScrollLimit = 24;
         const filters = { "price.min": "13.00", "price.max": "24.00" };
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => false);
 
         const collector = new PublicationCollector({ userId: Random.id() });
@@ -247,10 +253,12 @@ describe("Publication", function () {
       });
 
       it("should return products from all shops when multiple shops are provided", function (done) {
-        const filters = { shops: [shop._id] };
+        const filters = { shops: [shopId] };
         const productScrollLimit = 24;
         sandbox.stub(Reaction, "getCurrentShop", function () {return { _id: "123" };});
         sandbox.stub(Roles, "userIsInRole", () => true);
+        sandbox.stub(Reaction, "hasPermission", () => true);
+        sandbox.stub(Reaction, "getShopsWithRoles", () =>  [shopId]);
 
         const collector = new PublicationCollector({ userId: Random.id() });
         let isDone = false;
@@ -275,7 +283,7 @@ describe("Publication", function () {
         const product = Collections.Products.findOne({
           isVisible: true
         });
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
 
         const collector = new PublicationCollector({ userId: Random.id() });
 
@@ -290,7 +298,7 @@ describe("Publication", function () {
       });
 
       it("should return a product based on a regex", function (done) {
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
 
         const collector = new PublicationCollector({ userId: Random.id() });
 
@@ -305,7 +313,7 @@ describe("Publication", function () {
       });
 
       it("should not return a product based on a regex if it isn't visible", function (done) {
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => false);
 
         const collector = new PublicationCollector({ userId: Random.id() });
@@ -313,8 +321,12 @@ describe("Publication", function () {
 
         collector.collect("Product", "my", (collections) => {
           const products = collections.Products;
+          if (products) {
+            expect(products.length).to.equal(0);
+          } else {
+            expect(products).to.be.undefined;
+          }
 
-          expect(products).to.be.undefined;
 
           if (!isDone) {
             isDone = true;
@@ -324,8 +336,9 @@ describe("Publication", function () {
       });
 
       it("should return a product based on a regex to admin even if it isn't visible", function (done) {
-        sandbox.stub(Reaction, "getCurrentShop", () => shop);
+        sandbox.stub(Reaction, "getShopId", () => shopId);
         sandbox.stub(Roles, "userIsInRole", () => true);
+        sandbox.stub(Reaction, "hasPermission", () => true);
 
         const collector = new PublicationCollector({ userId: Random.id() });
         let isDone = false;

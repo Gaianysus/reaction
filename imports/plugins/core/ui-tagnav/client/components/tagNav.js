@@ -1,12 +1,11 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import _ from "lodash";
+import { Components } from "@reactioncommerce/reaction-components";
 import { getTagIds } from "/lib/selectors/tags";
 import { DragDropProvider } from "/imports/plugins/core/ui/client/providers";
-import { Button, EditButton } from "/imports/plugins/core/ui/client/components";
 import { TagHelpers } from "/imports/plugins/core/ui-tagnav/client/helpers";
-import { TagList } from "/imports/plugins/core/ui/client/components/tags/";
-import TagGroup from "./tagGroup";
+import ShopSelect from "/imports/plugins/core/dashboard/client/components/shopSelect";
 
 class TagNav extends Component {
   constructor(props) {
@@ -20,11 +19,26 @@ class TagNav extends Component {
     this.setState({ selectedTag: nextProps.selectedTag });
   }
 
+  /**
+   * onShopSelectChange
+   * @method
+   * @summary Handle change in selected shop
+   * @param {script} event
+   * @param {String} shopId - selected shopId
+   * @since 1.5.8
+   * @return {void}
+  */
+  onShopSelectChange = (event, shopId) => {
+    if (this.props.handleShopSelectChange) {
+      this.props.handleShopSelectChange(event, shopId);
+    }
+  }
+
   renderEditButton() {
     const { editContainerItem } = this.props.navButtonStyles;
     return (
       <span className="navbar-item edit-button" style={editContainerItem}>
-        <EditButton
+        <Components.EditButton
           onClick={this.props.onEditButtonClick}
           bezelStyle="solid"
           primary={true}
@@ -35,6 +49,28 @@ class TagNav extends Component {
         />
       </span>
     );
+  }
+
+  /**
+  * renderShopSelect
+  * @method
+  * @summary Handles shop options display on mobile view
+  * @return {JSX} React node containing dropdown menu
+  */
+  renderShopSelect() {
+    if (this.props.handleShopSelectChange) {
+      return (
+        <ShopSelect
+          className={"shop-select"}
+          isTagNav={true}
+          onShopSelectChange={this.onShopSelectChange}
+          shopName={this.props.shop.name}
+          shops={this.props.shops}
+          shopId={this.props.shop._id}
+        />
+      );
+    }
+    return null;
   }
 
   tagGroupProps = (tag) => {
@@ -60,7 +96,7 @@ class TagNav extends Component {
     return (
       <div className={`rui tagnav ${navbarOrientation} ${navbarPosition} ${navbarAnchor} ${navbarVisibility}`}>
         <div className="navbar-header">
-          <Button
+          <Components.Button
             primary={true}
             icon="times"
             status="default"
@@ -69,16 +105,17 @@ class TagNav extends Component {
           />
           {this.props.children}
         </div>
+        {this.renderShopSelect()}
         <div className="navbar-items">
           <DragDropProvider>
-            <TagList
+            <Components.TagList
               {...this.props}
               isTagNav={true}
               draggable={true}
               enableNewTagForm={true}
             >
               <div className="dropdown-container">
-                <TagGroup
+                <Components.TagGroup
                   {...this.props}
                   editable={this.props.editable === true}
                   tagGroupProps={this.tagGroupProps(this.state.selectedTag || {})}
@@ -89,7 +126,7 @@ class TagNav extends Component {
                   onTagSave={this.handleTagSave}
                 />
               </div>
-            </TagList>
+            </Components.TagList>
           </DragDropProvider>
           {this.props.canEdit && this.renderEditButton()}
         </div>
@@ -103,6 +140,7 @@ TagNav.propTypes = {
   children: PropTypes.node,
   closeNavbar: PropTypes.func,
   editable: PropTypes.bool,
+  handleShopSelectChange: PropTypes.func,
   navButtonStyles: PropTypes.object,
   navbarAnchor: PropTypes.string,
   navbarOrientation: PropTypes.string,
@@ -110,7 +148,9 @@ TagNav.propTypes = {
   navbarVisibility: PropTypes.string,
   onEditButtonClick: PropTypes.func,
   onMoveTag: PropTypes.func,
-  selectedTag: PropTypes.object
+  selectedTag: PropTypes.object,
+  shop: PropTypes.object,
+  shops: PropTypes.array
 };
 
 export default TagNav;

@@ -2,7 +2,7 @@ import { Meteor } from "meteor/meteor";
 import { expect } from "meteor/practicalmeteor:chai";
 import { sinon } from "meteor/practicalmeteor:sinon";
 
-import { ExampleApi } from "./exampleapi";
+import { ExampleApi, RISKY_TEST_CARD } from "./exampleapi";
 
 const paymentMethod = {
   processor: "Generic",
@@ -47,6 +47,30 @@ describe("ExampleApi", function () {
       paymentData: paymentData
     });
     expect(transaction).to.not.be.undefined;
+  });
+
+  it("should return risk status for flagged test card", function () {
+    const cardData = {
+      name: "Test User",
+      number: RISKY_TEST_CARD,
+      expireMonth: "2",
+      expireYear: "2018",
+      cvv2: "123",
+      type: "visa"
+    };
+    const paymentData = {
+      currency: "USD",
+      total: "19.99"
+    };
+
+    const transactionType = "authorize";
+    const transaction = ExampleApi.methods.authorize.call({
+      transactionType: transactionType,
+      cardData: cardData,
+      paymentData: paymentData
+    });
+
+    expect(transaction.riskStatus).to.be.defined;
   });
 
   it("should return data from ThirdPartAPI capture", function (done) {
@@ -154,7 +178,7 @@ describe("Capture payment", function () {
 
   it("should throw an error if transaction ID is not found", function () {
     sandbox.stub(ExampleApi.methods, "capture", function () {
-      throw new Meteor.Error("Not Found");
+      throw new Meteor.Error("not-found", "Not Found");
     });
     expect(function () {
       Meteor.call("example/payment/capture", "abc123");
@@ -188,7 +212,7 @@ describe("Refund", function () {
 
   it("should throw an error if transaction ID is not found", function () {
     sandbox.stub(ExampleApi.methods.refund, "call", function () {
-      throw new Meteor.Error("404", "Not Found");
+      throw new Meteor.Error("not-found", "Not Found");
     });
     const transactionId = "abc1234";
     paymentMethod.transactionId =  transactionId;
@@ -221,7 +245,7 @@ describe("List Refunds", function () {
 
   it("should throw an error if transaction ID is not found", function () {
     sandbox.stub(ExampleApi.methods, "refunds", function () {
-      throw new Meteor.Error("404", "Not Found");
+      throw new Meteor.Error("not-found", "Not Found");
     });
     expect(() => Meteor.call("example/refund/list", paymentMethod)).to.throw(Meteor.Error, /Not Found/);
   });

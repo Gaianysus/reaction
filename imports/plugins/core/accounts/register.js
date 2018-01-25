@@ -1,5 +1,11 @@
 import { Reaction } from "/server/api";
 
+/**
+ * @file Accounts core plugin: Manage how members sign into your shop
+ *
+ * @namespace Accounts
+ */
+
 Reaction.registerPackage({
   label: "Accounts",
   name: "reaction-accounts",
@@ -9,7 +15,7 @@ Reaction.registerPackage({
   registry: [{
     route: "/dashboard/accounts",
     name: "accounts",
-    provides: "dashboard",
+    provides: ["dashboard"],
     label: "Accounts",
     description: "Manage how members sign into your shop.",
     icon: "fa fa-users",
@@ -26,16 +32,17 @@ Reaction.registerPackage({
   }, {
     label: "Account Settings",
     icon: "fa fa-sign-in",
-    provides: "settings",
+    provides: ["settings"],
     route: "/dashboard/account/settings",
     container: "accounts",
     workflow: "coreAccountsWorkflow",
-    template: "accountsSettings"
+    template: "accountsSettings",
+    showForShopTypes: ["primary"]
   }, {
     route: "/dashboard/accounts",
     name: "dashboard/accounts",
     workflow: "coreAccountsWorkflow",
-    provides: "shortcut",
+    provides: ["shortcut"],
     label: "Accounts",
     icon: "fa fa-users",
     priority: 1,
@@ -47,7 +54,7 @@ Reaction.registerPackage({
     name: "account/profile",
     label: "Profile",
     icon: "fa fa-user",
-    provides: "userAccountDropdown"
+    provides: ["userAccountDropdown"]
   }],
   layout: [{
     layout: "coreLayout",
@@ -57,7 +64,7 @@ Reaction.registerPackage({
     enabled: true,
     structure: {
       template: "accountsDashboard",
-      layoutHeader: "layoutHeader",
+      layoutHeader: "NavBar",
       layoutFooter: "",
       notFound: "notFound",
       dashboardHeader: "dashboardHeader",

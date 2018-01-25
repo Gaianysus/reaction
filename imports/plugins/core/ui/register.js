@@ -9,7 +9,7 @@ Reaction.registerPackage({
   registry: [{
     route: "/dashboard/ui",
     name: "reaction-ui/uiDashboard",
-    provides: "dashboard",
+    provides: ["dashboard"],
     workflow: "coreUIWorkflow",
     container: "appearance",
     label: "Themes",
@@ -30,7 +30,7 @@ Reaction.registerPackage({
     enabled: true,
     structure: {
       template: "uiDashboard",
-      layoutHeader: "layoutHeader",
+      layoutHeader: "NavBar",
       layoutFooter: "",
       notFound: "notFound",
       dashboardHeader: "dashboardHeader",

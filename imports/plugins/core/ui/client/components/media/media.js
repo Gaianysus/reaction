@@ -1,8 +1,11 @@
 import React, { Component } from "react";
+import classnames from "classnames";
 import PropTypes from "prop-types";
-import { IconButton } from "../";
+import ReactImageMagnify from "react-image-magnify";
 import { SortableItem } from "../../containers";
-
+import { Components, registerComponent } from "@reactioncommerce/reaction-components";
+import { Reaction } from "/client/api";
+import Hint from "./hint";
 
 class MediaItem extends Component {
   handleMouseEnter = (event) => {
@@ -29,7 +32,7 @@ class MediaItem extends Component {
     if (this.props.revision) {
       if (this.props.revision.changeType === "remove") {
         return (
-          <IconButton
+          <Components.IconButton
             icon="fa"
             status="danger"
             i18nKeyTooltip="admin.mediaGallery.removedImage"
@@ -39,7 +42,7 @@ class MediaItem extends Component {
         );
       }
       return (
-        <IconButton
+        <Components.IconButton
           icon="fa"
           status="info"
           i18nKeyTooltip="admin.mediaGallery.addedImage"
@@ -58,7 +61,7 @@ class MediaItem extends Component {
         return (
           <div className="rui badge-container">
             {this.renderRevision()}
-            <IconButton
+            <Components.IconButton
               icon="fa fa-times"
               onClick={this.handleRemoveMedia}
               i18nKeyTooltip="admin.mediaGallery.deleteImage"
@@ -89,21 +92,47 @@ class MediaItem extends Component {
   }
 
   renderImage() {
-    const image = (
+    if (this.props.zoomable && !this.props.editable) {
+      return (
+        <ReactImageMagnify {...{
+          smallImage: {
+            width: this.props.mediaWidth,
+            height: this.props.mediaHeight,
+            src: this.source
+          },
+          imageClassName: "img-responsive",
+          fadeDurationInMs: 150,
+          hoverDelayInMs: 200,
+          pressDuration: 300,
+          largeImage: {
+            src: this.source,
+            width: this.props.mediaWidth * 2,
+            height: this.props.mediaHeight * 2
+          },
+          isHintEnabled: true,
+          enlargedImageContainerClassName: "zoomed-image-container",
+          hintTextMouse: "Hover to zoom",
+          hintTextTouch: "Long-touch to zoom",
+          hintComponent: Hint
+        }}
+        />
+      );
+    }
+    return (
       <img
         alt=""
         className="img-responsive"
         src={this.source}
       />
     );
-
-    return image;
   }
 
   render() {
+    const classes = { "gallery-image": true, "no-fade-on-hover": this.props.zoomable && !this.props.editable,
+      "admin-gallery-image": Reaction.hasAdminAccess() };
     const mediaElement = (
       <div
-        className="gallery-image"
+        className={classnames(classes)}
         onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave}
       >
@@ -137,7 +166,10 @@ MediaItem.propTypes = {
   onMouseLeave: PropTypes.func,
   onRemoveMedia: PropTypes.func,
   revision: PropTypes.object,
-  source: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
+  source: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  zoomable: PropTypes.bool
 };
 
-export default SortableItem("media", MediaItem);
+registerComponent("MediaItem", MediaItem, SortableItem("media"));
+
+export default SortableItem("media")(MediaItem);

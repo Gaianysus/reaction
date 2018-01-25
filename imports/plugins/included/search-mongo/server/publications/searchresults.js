@@ -1,4 +1,5 @@
 import _ from "lodash";
+import escapeStringRegex from "escape-string-regexp";
 import { Meteor } from "meteor/meteor";
 import { Roles } from "meteor/alanning:roles";
 import { check, Match } from "meteor/check";
@@ -18,6 +19,11 @@ function getProductFindTerm(searchTerm, searchTags, userId) {
   }
   if (!Roles.userIsInRole(userId, ["admin", "owner"], shopId)) {
     findTerm.isVisible = true;
+  }
+  // Deletes the shopId field from "findTerm" for primary shop
+  // thereby allowing users on primary shop to search all products
+  if (shopId === Reaction.getPrimaryShopId()) {
+    delete findTerm.shopId;
   }
   return findTerm;
 }
@@ -49,38 +55,63 @@ getResults.products = function (searchTerm, facets, maxResults, userId) {
 
 getResults.orders = function (searchTerm, facets, maxResults, userId) {
   let orderResults;
-  const searchPhone = _.replace(searchTerm, /\D/g, "");
+  const regexSafeSearchTerm = escapeStringRegex(searchTerm);
   const shopId = Reaction.getShopId();
   const findTerm = {
     $and: [
       { shopId: shopId },
       { $or: [
-        { _id: searchTerm },
+        { _id: {
+          $regex: `^${regexSafeSearchTerm}`,
+          $options: "i"
+        } },
         { userEmails: {
-          $regex: searchTerm,
+          $regex: regexSafeSearchTerm,
           $options: "i"
         } },
         { shippingName: {
-          $regex: searchTerm,
+          $regex: regexSafeSearchTerm,
           $options: "i"
         } },
         { billingName: {
-          $regex: searchTerm,
+          $regex: regexSafeSearchTerm,
+          $options: "i"
+        } },
+        { billingCard: {
+          $regex: regexSafeSearchTerm,
           $options: "i"
         } },
         { billingPhone: {
-          $regex: "^" + searchPhone + "$",
+          $regex: regexSafeSearchTerm,
           $options: "i"
         } },
         { shippingPhone: {
-          $regex: "^" + searchPhone + "$",
+          $regex: regexSafeSearchTerm,
+          $options: "i"
+        } },
+        { "product.title": {
+          $regex: regexSafeSearchTerm,
+          $options: "i"
+        } },
+        { "variants.title": {
+          $regex: regexSafeSearchTerm,
+          $options: "i"
+        } },
+        { "variants.optionTitle": {
+          $regex: regexSafeSearchTerm,
           $options: "i"
         } }
       ] }
-    ] };
+    ]
+  };
+  // Deletes the shopId field from "findTerm" for primary shop
+  // thereby allowing users on primary shop to search all products
+  if (shopId === Reaction.getPrimaryShopId()) {
+    delete findTerm.$and[0].shopId;
+  }
   if (Reaction.hasPermission("orders", userId)) {
     orderResults = OrderSearch.find(findTerm, { limit: maxResults });
-    Logger.debug(`Found ${orderResults.count()} orders searching for ${searchTerm}`);
+    Logger.debug(`Found ${orderResults.count()} orders searching for ${regexSafeSearchTerm}`);
   }
   return orderResults;
 };
@@ -111,7 +142,13 @@ getResults.accounts = function (searchTerm, facets, maxResults, userId) {
             $options: "i"
           } }
         ] }
-      ] };
+      ]
+    };
+    // Deletes the shopId field from "findTerm" for primary shop
+    // thereby allowing users on primary shop to search all products
+    if (shopId === Reaction.getPrimaryShopId()) {
+      delete findTerm.$and[0].shopId;
+    }
     accountResults = AccountSearch.find(findTerm, {
       limit: maxResults
     });

@@ -64,7 +64,7 @@ export const ProductRevision = {
 
   getVariantPriceRange(variantId) {
     const children = this.getVariants(variantId);
-    const visibleChildren = children.filter(child => child.isVisible);
+    const visibleChildren = children.filter(child => child.isVisible && !child.isDeleted);
 
     switch (visibleChildren.length) {
       case 0:
@@ -170,6 +170,11 @@ Media.files.before.insert((userid, media) => {
   if (RevisionApi.isRevisionControlEnabled() === false) {
     return true;
   }
+  if (media.metadata.workflow === "published") {
+    // Skip by setting metadata.workflow.status to published
+    return true;
+  }
+
   if (media.metadata.productId) {
     const revisionMetadata = Object.assign({}, media.metadata);
     revisionMetadata.workflow = "published";
@@ -275,6 +280,11 @@ Products.before.insert((userId, product) => {
     return true;
   }
 
+  if (product.workflow && Array.isArray(product.workflow.workflow) && product.workflow.workflow.indexOf("imported") !== -1) {
+    // Mark imported products as published by default.
+    return true;
+  }
+
   const productRevision = Revisions.findOne({
     "documentId": product._id,
     "workflow.status": {
@@ -306,7 +316,7 @@ Products.before.insert((userId, product) => {
 
     if (archivedCount > 0) {
       Logger.debug(`Cannot create product ${product._id} as a product/variant higher in it's ancestors tree is marked as 'isDeleted'.`);
-      throw new Meteor.Error("Unable to create product variant");
+      throw new Meteor.Error("unable-to-create-variant", "Unable to create product variant");
     }
   }
 
@@ -360,7 +370,7 @@ Products.before.update(function (userId, product, fieldNames, modifier, options)
 
     if (archivedCount > 0) {
       Logger.debug(`Cannot restore product ${product._id} as a product/variant higher in it's ancestors tree is marked as 'isDeleted'.`);
-      throw new Meteor.Error("Unable to delete product variant");
+      throw new Meteor.Error("unable-to-delete-variant", "Unable to delete product variant");
     }
   }
 

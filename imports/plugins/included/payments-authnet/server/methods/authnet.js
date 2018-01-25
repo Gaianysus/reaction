@@ -6,17 +6,22 @@ import { Meteor } from "meteor/meteor";
 import { check, Match } from "meteor/check";
 import { Promise } from "meteor/promise";
 
-import AuthNetAPI from "@reactioncommerce/authorize-net";
+import AuthNetAPI from "authorize-net";
 import { Reaction, Logger } from "/server/api";
 import { Packages } from "/lib/collections";
 import { PaymentMethod } from "/lib/collections/schemas";
 
-function getAccountOptions() {
-  const settings = Packages.findOne({
+function getAccountOptions(isPayment) {
+  const queryConditions = {
     name: "reaction-auth-net",
-    shopId: Reaction.getShopId(),
-    enabled: true
-  }).settings;
+    shopId: Reaction.getShopId()
+  };
+  if (isPayment) {
+    queryConditions.enabled = true;
+  }
+
+  const packageData = Packages.findOne(queryConditions);
+  const { settings } = packageData;
   const ref = Meteor.settings.authnet;
   const options = {
     login: getSettings(settings, ref, "api_id"),
@@ -77,7 +82,8 @@ Meteor.methods({
       expirationYear: cardInfo.expirationYear,
       expirationMonth: cardInfo.expirationMonth
     };
-    const authnetService = getAuthnetService(getAccountOptions());
+    const isPayment = true;
+    const authnetService = getAuthnetService(getAccountOptions(isPayment));
     const authnetTransactionFunc = authnetService[transactionType];
     let authResult;
     if (authnetTransactionFunc) {
@@ -90,7 +96,7 @@ Meteor.methods({
         Logger.fatal(error);
       }
     } else {
-      throw new Meteor.Error("403", "Invalid Transaction Type");
+      throw new Meteor.Error("invalid-transaction-type", "Invalid Transaction Type");
     }
 
     const result =  Promise.await(authResult);
@@ -172,7 +178,8 @@ Meteor.methods({
   },
   "authnet/refund/list": function () {
     check(arguments, [Match.Any]);
-    Meteor.Error("Not Implemented", "Authorize.net does not yet support retrieving a list of refunds.");
+    Meteor.Error("not-implemented", "Authorize.net does not yet support retrieving a list of refunds.");
+    return [];
   }
 });
 

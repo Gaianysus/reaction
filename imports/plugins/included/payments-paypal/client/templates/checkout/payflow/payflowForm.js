@@ -85,7 +85,7 @@ AutoForm.addHooks("paypal-payment-form", {
     };
     const storedCard = form.type.charAt(0).toUpperCase() + form.type.slice(1) + " " + doc.cardNumber.slice(-4);
     PayPal.authorize(form, {
-      total: Cart.findOne().cartTotal(),
+      total: Cart.findOne().getTotal(),
       currency: Shops.findOne().currency
     }, function (error, transaction) {
       submitting = false; // todo: check scope
@@ -94,37 +94,23 @@ AutoForm.addHooks("paypal-payment-form", {
         uiEnd(template, i18next.t("checkout.paymentMethod.resubmit"));
       } else {
         if (transaction.saved === true) {
-          const normalizedStatus = (function () {
-            switch (transaction.response.state) {
-              case "created":
-                return "created";
-              case "approved":
-                return "created";
-              case "failed":
-                return "failed";
-              case "canceled":
-                return "canceled";
-              case "expired":
-                return "expired";
-              case "pending":
-                return "pending";
-              default:
-                return "failed";
-            }
-          })();
+          let normalizedStatus = transaction.response.state;
+          if (normalizedStatus === "approved") normalizedStatus = "created";
 
-          const normalizedMode = (function () {
-            switch (transaction.response.intent) {
-              case "sale":
-                return "capture";
-              case "authorize":
-                return "authorize";
-              case "order":
-                return "capture";
-              default:
-                return "capture";
-            }
-          })();
+          const supportedStatuses = ["created", "failed", "canceled", "expired", "pending"];
+          if (supportedStatuses.indexOf(normalizedStatus) === -1) normalizedStatus = "failed";
+
+          let normalizedMode;
+          switch (transaction.response.intent) {
+            case "authorize":
+              normalizedMode = "authorize";
+              break;
+            case "sale":
+            case "order":
+            default:
+              normalizedMode = "capture";
+              break;
+          }
 
           // just auth, not transaction
           const transactionId = transaction.response.id;
@@ -133,7 +119,7 @@ AutoForm.addHooks("paypal-payment-form", {
           if (typeof transaction.response.transactions[0].related_resources[0] === "object") {
             authId = transaction.response.transactions[0].related_resources[0].authorization.id;
           }
-          Meteor.subscribe("Packages");
+          Meteor.subscribe("Packages", Reaction.getShopId());
           const packageData = Packages.findOne({
             name: "reaction-paypal",
             shopId: Reaction.getShopId()

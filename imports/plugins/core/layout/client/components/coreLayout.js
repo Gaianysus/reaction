@@ -1,43 +1,44 @@
-import React, { Component } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import classnames from "classnames";
+import { getComponent, registerComponent } from "@reactioncommerce/reaction-components";
 import Blaze from "meteor/gadicc:blaze-react-component";
 import { Template } from "meteor/templating";
 
-class CoreLayout extends Component {
-  static propTypes = {
-    actionViewIsOpen: PropTypes.bool,
-    data: PropTypes.object,
-    structure: PropTypes.object
-  }
+const CoreLayout = ({ actionViewIsOpen, structure }) => {
+  const { layoutHeader, layoutFooter, template } = structure || {};
 
-  render() {
-    const { layoutHeader, layoutFooter, template } = this.props.structure || {};
-    const pageClassName = classnames({
-      "page": true,
-      "show-settings": this.props.actionViewIsOpen
-    });
+  const pageClassName = classnames({
+    "page": true,
+    "show-settings": actionViewIsOpen
+  });
 
-    return (
-      <div className={pageClassName} id="reactionAppContainer">
-        { Template[layoutHeader] &&
-          <Blaze template={layoutHeader} className="reaction-navigation-header" />
-        }
+  const headerComponent = layoutHeader && getComponent(layoutHeader);
+  const footerComponent = layoutFooter && getComponent(layoutFooter);
 
-        <Blaze template="cartDrawer" className="reaction-cart-drawer" />
+  return (
+    <div className={pageClassName} id="reactionAppContainer">
 
-        { Template[template] &&
-          <main>
-            <Blaze template={template} />
-          </main>
-        }
+      {headerComponent && React.createElement(headerComponent, {})}
 
-        { Template[layoutFooter] &&
-          <Blaze template={layoutFooter} className="reaction-navigation-footer footer-default" />
-        }
-      </div>
-    );
-  }
-}
+      <Blaze template="cartDrawer" className="reaction-cart-drawer" />
+
+      {Template[template] &&
+        <main>
+          <Blaze template={template} />
+        </main>}
+
+      {footerComponent && React.createElement(footerComponent, {})}
+    </div>
+  );
+};
+
+CoreLayout.propTypes = {
+  actionViewIsOpen: PropTypes.bool,
+  data: PropTypes.object,
+  structure: PropTypes.object
+};
+
+registerComponent("coreLayout", CoreLayout);
 
 export default CoreLayout;

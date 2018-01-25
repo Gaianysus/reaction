@@ -4,15 +4,18 @@ import { Meteor } from "meteor/meteor";
 import { Tracker } from "meteor/tracker";
 import { SimpleSchema } from "meteor/aldeed:simple-schema";
 import { Reaction } from "/client/api";
-import { Shops, Packages } from "/lib/collections";
-
-//
-// Reaction i18n Translations, RTL and Currency Exchange Support
-//
 
 /**
- * getBrowserLanguage
- * @summary detects device default language
+ * @file **Internationalization**
+ * Methods and template helpers for i18n, translations, right-to-left (RTL) and currency exchange support
+ * @namespace i18n
+ */
+
+/**
+ * @name getBrowserLanguage
+ * @method
+ * @memberof i18n
+ * @summary Detects device default language
  * @return {String} language code
  */
 export function getBrowserLanguage() {
@@ -28,8 +31,10 @@ export function getBrowserLanguage() {
 }
 
 /**
- * getLabelsFor
- * get Labels for simple.schema keys
+ * @name getLabelsFor
+ * @method
+ * @memberof i18n
+ * @summary Get Labels for simple.schema keys
  * @param  {Object} schema - schema
  * @param  {String} name - name
  * @return {Object} return schema label object
@@ -53,13 +58,14 @@ export function getLabelsFor(schema, name) {
 }
 
 /**
- * getMessagesFor
- * get i18n messages for autoform messages
- * currently using a globalMessage namespace only*
- * (1) Use schema-specific message for specific key
- * (2) Use schema-specific message for generic key
- * (3) Use schema-specific message for type
- * @todo implement messaging hierarchy from simple-schema
+ * @name getMessagesFor
+ * @method
+ * @memberof i18n
+ * @summary Get i18n messages for autoform messages. Currently using a globalMessage namespace only.
+ * 1. Use schema-specific message for specific key
+ * 2. Use schema-specific message for generic key
+ * 3. Use schema-specific message for type
+ * @todo Implement messaging hierarchy from simple-schema
  * @return {Object} returns i18n translated message for schema labels
  */
 export function getMessagesFor() {
@@ -76,59 +82,33 @@ export function getMessagesFor() {
   return messages;
 }
 
-/**
- *  set language and autorun on change of language
- *  initialize i18n and load data resources for the current language and fallback "EN"
- *
- */
+// set language and autorun on change of language
+// initialize i18n and load data resources for the current language and fallback "EN"
 export const i18nextDep = new Tracker.Dependency();
 export const localeDep = new Tracker.Dependency();
 export const currencyDep = new Tracker.Dependency();
-export const packageNamespaces = [];
 
 Meteor.startup(() => {
   Tracker.autorun(function (c) {
+    let merchantShopsReadyOrSkipped = false;
+
+    // Choose shopSubscription based on marketplace settings
+    if (Reaction.marketplaceEnabled && Reaction.merchantLanguage) {
+      merchantShopsReadyOrSkipped = Reaction.Subscriptions.MerchantShops.ready();
+    } else {
+      merchantShopsReadyOrSkipped = true;
+    }
+
     // setting local and active packageNamespaces
     // packageNamespaces are used to determine i18n namespace
-    if (Reaction.Subscriptions.Shops.ready()) {
-      // every package gets a namespace, fetch them and export
-      const packages = Packages.find({}, {
-        fields: {
-          name: 1
-        }
-      }).fetch();
-      for (const pkg of packages) {
-        packageNamespaces.push(pkg.name);
-      }
-
-      // use i18n detected language to getLocale info
+    if (Reaction.Subscriptions.PrimaryShop.ready() && merchantShopsReadyOrSkipped) {
+      // use i18n detected language to getLocale info and set it client side
       Meteor.call("shop/getLocale", (error, result) => {
         if (result) {
           const locale = result;
           locale.language = getBrowserLanguage();
           moment.locale(locale.language);
-          // flag in case the locale currency isn't enabled
-          locale.currencyEnabled = locale.currency.enabled;
-          const user = Meteor.user();
-          if (user && user.profile && user.profile.currency) {
-            localStorage.setItem("currency", user.profile.currency);
-          } else {
-            const localStorageCurrency = localStorage.getItem("currency");
-            if (!localStorageCurrency) {
-              if (locale.currencyEnabled) {
-                // in case of multiple locale currencies
-                const primaryCurrency = locale.locale.currency.split(",")[0];
-                localStorage.setItem("currency", primaryCurrency);
-              } else {
-                const shop = Shops.findOne(Reaction.getShopId(), {
-                  fields: {
-                    currency: 1
-                  }
-                });
-                localStorage.setItem("currency", shop.currency);
-              }
-            }
-          }
+
           Reaction.Locale.set(locale);
           localeDep.changed();
 

@@ -2,8 +2,9 @@ import { Shops } from "/lib/collections";
 import { Logger } from "/server/api";
 
 /**
- * getDomain
- * local helper for creating admin users
+ * @method getRegistryDomain
+ * @memberof Core
+ * @summary local helper for creating admin users
  * @param {String} requestUrl - url
  * @return {String} domain name stripped from requestUrl
  */
@@ -15,9 +16,10 @@ export function getRegistryDomain(requestUrl) {
 
 
 /**
- *  @private setDomain
- *  @summary update the default shop url if ROOT_URL supplied is different from current
- *  @return {String} returns insert result
+ * @method setDomain
+ * @memberof Core
+ * @summary update the default shop url if ROOT_URL supplied is different from current
+ * @return {String} returns insert result
  */
 export function setDomain() {
   let currentDomain;

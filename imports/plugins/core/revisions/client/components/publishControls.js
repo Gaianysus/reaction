@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import { Components } from "@reactioncommerce/reaction-components";
 import {
   Button,
   FlatButton,
@@ -7,7 +8,6 @@ import {
   Divider,
   DropDownMenu,
   MenuItem,
-  ToolbarGroup,
   Switch,
   Icon
 } from "/imports/plugins/core/ui/client/components";
@@ -102,6 +102,15 @@ class PublishControls extends Component {
     return "app.hideChanges";
   }
 
+  get primaryRevision() {
+    const revisions = this.props.revisions;
+    if (Array.isArray(revisions) && revisions.length) {
+      const primaryDocumentId = this.props.documentIds[0];
+      return revisions.find(revision => revision.documentId === primaryDocumentId);
+    }
+    return false;
+  }
+
   get revisionIds() {
     if (this.hasRevisions) {
       return this.props.revisions.map(revision => revision._id);
@@ -122,8 +131,8 @@ class PublishControls extends Component {
   }
 
   get isVisible() {
-    if (Array.isArray(this.props.revisions) && this.props.revisions.length) {
-      const primaryRevision = this.props.revisions[0];
+    if (Array.isArray(this.props.revisions) && this.props.revisions.length && this.primaryRevision) {
+      const primaryRevision = this.primaryRevision;
 
       if (primaryRevision.documentData.isVisible) {
         return "public";
@@ -186,7 +195,7 @@ class PublishControls extends Component {
 
   renderDeletionStatus() {
     if (this.hasChanges) {
-      if (this.props.revisions[0].documentData.isDeleted) {
+      if (this.primaryRevision && this.primaryRevision.documentData.isDeleted) {
         return (
           <Button
             label="Archived"
@@ -210,16 +219,18 @@ class PublishControls extends Component {
     }
 
     return (
-      <Button
-        bezelStyle="outline"
-        disabled={this.hasChanges === false}
-        label="Publish"
-        onClick={this.handlePublishClick}
-        status="success"
-        tooltip={"This product has changes that need to be published before they are visible to your customers."}
-        i18nKeyLabel="productDetailEdit.publish"
-        {...buttonProps}
-      />
+      <div className="hidden-xs">
+        <Button
+          bezelStyle="outline"
+          disabled={this.hasChanges === false}
+          label="Publish"
+          onClick={this.handlePublishClick}
+          status="success"
+          tooltip={"This product has changes that need to be published before they are visible to your customers."}
+          i18nKeyLabel="productDetailEdit.publish"
+          {...buttonProps}
+        />
+      </div>
     );
   }
 
@@ -276,17 +287,19 @@ class PublishControls extends Component {
       }
 
       return (
-        <FlatButton
-          i18nKeyTooltip={i18nKeyTooltip}
-          icon="fa fa-eye-slash"
-          onIcon="fa fa-eye"
-          toggle={true}
-          tooltip={tooltip}
-          value="public"
-          onValue="private"
-          toggleOn={this.isVisible === "public"}
-          onToggle={this.handleVisibilityChange}
-        />
+        <div className="hidden-xs">
+          <FlatButton
+            i18nKeyTooltip={i18nKeyTooltip}
+            icon="fa fa-eye-slash"
+            onIcon="fa fa-eye"
+            toggle={true}
+            tooltip={tooltip}
+            value="public"
+            onValue="private"
+            toggleOn={this.isVisible === "public"}
+            onToggle={this.handleVisibilityChange}
+          />
+        </div>
       );
     }
 
@@ -344,7 +357,7 @@ class PublishControls extends Component {
       <FlatButton
         onClick={() => {
           Reaction.showActionView({
-            i18nKeyTite: "dashboard.coreTitle",
+            i18nKeyTitle: "dashboard.coreTitle",
             title: "Dashboard",
             template: "dashboardPackages"
           });
@@ -369,14 +382,14 @@ class PublishControls extends Component {
   render() {
     if (this.props.isEnabled) {
       return (
-        <ToolbarGroup lastChild={true}>
+        <Components.ToolbarGroup lastChild={true}>
           {this.renderDeletionStatus()}
           {this.renderUndoButton()}
           {this.renderArchiveButton()}
           {this.renderViewControls()}
           {this.renderPublishButton()}
           {/* this.renderMoreOptionsButton() */}
-        </ToolbarGroup>
+        </Components.ToolbarGroup>
       );
     }
 

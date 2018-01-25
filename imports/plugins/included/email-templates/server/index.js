@@ -19,15 +19,39 @@ Reaction.registerTemplate({
  */
 
 /*
- * Accounts - Invite Shop member
+ * Accounts - Invite Shop member with an Existing User Account
  * When: Admin invites new member to shop
  */
 Reaction.registerTemplate({
-  title: "Accounts - Invite Shop Member",
+  title: "Accounts - Invite Shop Member - Existing User Account",
   name: TemplatePaths.inviteShopMemberTemplate,
   type: "email",
   template: Reaction.Email.getTemplateFile(TemplatePaths.inviteShopMemberTemplate),
-  subject: "You have been invited to join {{shop.name}}"
+  subject: "You have been invited to join the group \"{{groupName}}\" in the store \"{{shop.name}}\""
+});
+
+/*
+ * Accounts - Invite Shop member and create new user account
+ * When: Admin invites new member to shop
+ */
+Reaction.registerTemplate({
+  title: "Accounts - Invite Shop Member - New User Account",
+  name: TemplatePaths.inviteNewShopMemberTemplate,
+  type: "email",
+  template: Reaction.Email.getTemplateFile(TemplatePaths.inviteNewShopMemberTemplate),
+  subject: "You have been invited to join the group \"{{groupName}}\" in the store \"{{shop.name}}\""
+});
+
+/*
+ * Accounts - Invite Shop Owner
+ * When: A new shop is created. This is sent to the new shop owner
+ */
+Reaction.registerTemplate({
+  title: "Accounts - Invite Shop Owner",
+  name: TemplatePaths.inviteShopOwnerTemplate,
+  type: "email",
+  template: Reaction.Email.getTemplateFile(TemplatePaths.inviteShopOwnerTemplate),
+  subject: "{{shop.name}} has invited you to manage a store"
 });
 
 /*
@@ -65,6 +89,19 @@ Reaction.registerTemplate({
   type: "email",
   template: Reaction.Email.getTemplateFile(TemplatePaths.verifyEmailTemplate),
   subject: "{{shopName}}: Please verify your email address"
+});
+
+/*
+ * Accounts - Verify Updated Email
+ * When: A user signs up through launchdock
+ * TODO: Used by launchdock, I haven't been able to test efficiently
+ */
+Reaction.registerTemplate({
+  title: "Accounts - Verify Updated Email Address",
+  name: TemplatePaths.verifyUpdatedEmailTemplate,
+  type: "email",
+  template: Reaction.Email.getTemplateFile(TemplatePaths.verifyUpdatedEmailTemplate),
+  subject: "Verify your new email address"
 });
 
 
@@ -108,4 +145,17 @@ Reaction.registerTemplate({
   type: "email",
   template: Reaction.Email.getTemplateFile(TemplatePaths.orderRefunded),
   subject: "{{shop.name}}: Confirmation of refund for {{order._id}}"
+});
+
+/*
+  * Orders - Order Refunded
+  * When: Admin completes the order flow and item is shipped
+  * When: Admin refunds line items
+  */
+Reaction.registerTemplate({
+  title: "Orders - Order Item Refunded",
+  name: TemplatePaths.orderItemRefund,
+  type: "email",
+  template: Reaction.Email.getTemplateFile(TemplatePaths.orderItemRefund),
+  subject: "{{shop.name}}: Refund confirmation - {{order._id}}"
 });
